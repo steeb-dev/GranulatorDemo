@@ -29,11 +29,11 @@ public class Grain : MonoBehaviour
     void Start()
     {
         UpdateGrain();
-        this.gameObject.AddComponent<AudioSource>();
         audioSource = GetComponent<AudioSource>();
-        audioSource.spatialize = false;
-        audioSource.spatialBlend = 0;
-        audioSource.clip = null;
+        if (audioSource == null)
+        {
+            audioSource = this.gameObject.AddComponent<AudioSource>();
+        }
     }
     //---------------------------------------------------------------------
     public void UpdateGrain()
