@@ -34,7 +34,8 @@ public class Granulator : MonoBehaviour
     public AudioClip audioClip;
     public GameObject grainPrefab;
     private AudioClip lastClip;
-    // tmp vars
+    
+    // Temp vars
     private int newGrainPos = 0;
     private float newGrainPitch = 0;
     private float newGrainPitchRand = 0;
@@ -47,8 +48,12 @@ public class Granulator : MonoBehaviour
     private Vector3 pos;
 
     public bool moveGrains = true;
+    
+    [SerializeField]
     public List<Grain> _ActivePool;
     public List<Grain> _InactivePool;
+
+    private float[] window;
 
 
     //---------------------------------------------------------------------
@@ -65,7 +70,7 @@ public class Granulator : MonoBehaviour
             GameObject tmp = Instantiate(grainPrefab); //, this.transform);
             Grain g = tmp.GetComponent<Grain>();
             g._Granulator = this;
-            g.audioClip = audioClip;
+            g._AudioClip = audioClip;
             _ActivePool.Add(g);
         }
     }
@@ -81,7 +86,7 @@ public class Granulator : MonoBehaviour
             CreateWindow();
         }
 
-        // clamp values to reasonable ranges:
+        // Clamp values to reasonable ranges
         grainPos = Clamp(grainPos, 0, 1);
         grainPosRand = Clamp(grainPosRand, 0, 1);
         grainDist = (int)Clamp(grainDist, 1, 10000);
@@ -94,7 +99,7 @@ public class Granulator : MonoBehaviour
         grainVol = Clamp(grainVol, 0, 2);
         grainVolRand = Clamp(grainVolRand, 0, 1);
 
-        // calculate randomized values for new grains:
+        // Calculate randomized values for new grains
         newGrainPos = (int)((grainPos + Random.Range(0, grainPosRand)) * audioClip.samples);
         newGrainPitch = grainPitch;
         newGrainPitchRand = Random.Range(-grainPitchRand, grainPitchRand);
@@ -104,30 +109,59 @@ public class Granulator : MonoBehaviour
         newGrainVol = Clamp(grainVol + Random.Range(-grainVolRand, grainVolRand), 0, 3);
         pos = transform.position;
 
-        if (Input.GetKeyDown(KeyCode.Space))
+
+
+        // GRAIN TEST KEY TRIGGERS
+        if (Input.GetKeyDown(KeyCode.A))
         {
             SeedAllInactiveGrains();
         }
+
+        if (Input.GetKey(KeyCode.S))
+        {
+            if (_InactivePool.Count > 0)
+            {
+                SeedNewGrain(_InactivePool[0]);
+                _ActivePool.Add(_InactivePool[0]);
+                _InactivePool.RemoveAt(0);
+            }
+        }
+
     }
 
     void SeedAllInactiveGrains()
     {
-        foreach (Grain g in _InactivePool)
+        for (int i = _InactivePool.Count - 1; i >= 0; i--)
         {
-            SeedNewGrain(g);
+            // Seed new grain
+            SeedNewGrain(_InactivePool[i]);
+
+            // Move grain from inactive to active pool
+            _ActivePool.Add(_InactivePool[i]);
+            _InactivePool.RemoveAt(i);
         }
+
+        //foreach (Grain g in _InactivePool)
+        //{
+        //    // Remove from inactive pool and add to active pool
+        //    _InactivePool.Remove(g);
+        //    _ActivePool.Add(g);
+        //    SeedNewGrain(g);
+        //}
     }
 
 
     void SeedNewGrain(Grain g)
     {
-        if(g.audioClip != audioClip)
+        // Refresh grain if audio clip has changed
+        if (g._AudioClip != audioClip)
         {
-            g.audioClip = audioClip;
+            g._AudioClip = audioClip;
             g.UpdateGrain();
         }
 
-        g.NewGrain(newGrainPos, newGrainLength, newGrainPitch, newGrainPitchRand, newGrainVol, window, pos);
+        // Start new grain
+        g.PlayGrain(newGrainPos, newGrainLength, newGrainPitch, newGrainPitchRand, newGrainVol, window, pos);
     }
 
     //---------------------------------------------------------------------
@@ -146,7 +180,4 @@ public class Granulator : MonoBehaviour
             window[i] = (float)0.5 * (1 - Mathf.Cos(2 * Mathf.PI * i / audioClip.frequency));
         }
     }
-
-
-    private float[] window;
 }
