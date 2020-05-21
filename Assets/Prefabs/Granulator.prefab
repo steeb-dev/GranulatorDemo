@@ -1,22 +1,12 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1001 &100100000
-Prefab:
-  m_ObjectHideFlags: 1
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications: []
-    m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 0}
-  m_RootGameObject: {fileID: 1021502729408534}
-  m_IsPrefabParent: 1
 --- !u!1 &1021502729408534
 GameObject:
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 5
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
   m_Component:
   - component: {fileID: 4651155242276878}
   - component: {fileID: 114747619626888988}
@@ -29,9 +19,10 @@ GameObject:
   m_IsActive: 1
 --- !u!4 &4651155242276878
 Transform:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1021502729408534}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 1, y: 0, z: 0}
@@ -42,29 +33,34 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &114747619626888988
 MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1021502729408534}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa148c57327197b419af9d89df4c4afb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxGrains: 20
-  grainLength: 400
-  grainLengthRand: 400
-  grainPos: 0.17
-  grainPosRand: 0.84
-  grainDist: 50
-  grainDistRand: 100
-  grainPitch: 1
-  grainPitchRand: 0.05
-  grainVol: 2
-  grainVolRand: 0.27
-  grainAttack: 0.12
-  grainRelease: 0.19
-  isPlaying: 1
-  audioClip: {fileID: 8300000, guid: 1df7d50de177e5d45af4f175071a3733, type: 3}
-  grainPrefab: {fileID: 1058601950276710, guid: 0439a9d037d24064abe436db9fded4c6,
-    type: 2}
+  _ParticleManager: {fileID: 0}
+  _MaxGrains: 10
+  _GrainLength: 160
+  _GrainLengthRand: 0
+  _GrainPos: 0
+  _GrainPosRand: 0
+  _GrainDist: 10
+  _GrainDistRand: 0
+  _GrainPitch: 1
+  _GrainPitchRand: 0
+  _GrainVol: 1
+  _GrainVolRand: 0
+  _GrainAttack: 0.3
+  _GrainRelease: 0.3
+  _IsPlaying: 1
+  _AudioClip: {fileID: 0}
+  _GrainPrefab: {fileID: 0}
+  _MoveGrains: 1
+  _ActivePool: []
+  _InactivePool: []
+  _GrainObjects: []

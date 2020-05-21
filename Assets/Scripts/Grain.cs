@@ -18,9 +18,9 @@ public class Grain : MonoBehaviour
     private float[] _Samples;
     private float[] _GrainSamples;
     private int _Channels;
-    private int _CurrentIndex = -1;
+    public int _CurrentIndex = -1;
+    private float[] _GrainWindow;
     public Granulator _Granulator;
-    public float[] _GrainWindow;
 
 
     //---------------------------------------------------------------------
@@ -33,6 +33,15 @@ public class Grain : MonoBehaviour
         {
             _AudioSource = this.gameObject.AddComponent<AudioSource>();
         }
+    }
+
+    public void Initialise(AudioClip audioClip)
+    {
+        _AudioClip = audioClip;
+
+        _Samples = new float[_AudioClip.samples * _AudioClip.channels];
+        _Channels = _AudioClip.channels;
+        _AudioClip.GetData(_Samples, 0);
     }
 
     //---------------------------------------------------------------------
@@ -53,7 +62,7 @@ public class Grain : MonoBehaviour
     //---------------------------------------------------------------------
     public void PlayGrain(
         int newGrainPos, int newGrainLength, float newGrainPitch,
-        float newGrainPitchRand, float newGrainVol, float[] window, Vector3 pos)
+        float newGrainPitchRand, float newGrainVol, float[] window)
     {
         _GrainPos = (int)((newGrainPos / _Channels)) * _Channels; // Rounding to make sure pos always starts at first channel
         _GrainLength = newGrainLength;
@@ -97,16 +106,23 @@ public class Grain : MonoBehaviour
     //---------------------------------------------------------------------
     private float GetNextSample(int index, int sample)
     {
+        _CurrentIndex++;
+
         // If at the end of the grain duration, stop playing and reset index 
-        if (_CurrentIndex + 1 >= _GrainSamples.Length)
+        if (_CurrentIndex >= _GrainSamples.Length)
         {
             _CurrentIndex = -1;
             _IsPlaying = false;
-        }
+        }        
 
-        // Increase index and return sample from grain array
-        _CurrentIndex++;
-        return _GrainSamples[_CurrentIndex];
+        float returnSample;
+
+        if (_IsPlaying)
+            returnSample = _GrainSamples[_CurrentIndex];
+        else
+            returnSample = 0;
+
+        return returnSample;
     }
 
 
@@ -126,11 +142,11 @@ public class Grain : MonoBehaviour
         }
 
         // If this grain is not playing but it's still in active pool, remove from active pool and place in inactive pool
-        if (!_IsPlaying && _Granulator._ActivePool.Contains(this))
-        {
-            _Granulator._InactivePool.Add(this);
-            _Granulator._ActivePool.Remove(this);
-        }
+        //if (!_IsPlaying && _Granulator._ActivePool.Contains(this))
+        //{
+        //    _Granulator._InactivePool.Add(this);
+        //    _Granulator._ActivePool.Remove(this);
+        //}
     }
 
 

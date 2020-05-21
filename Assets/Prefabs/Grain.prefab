@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 114149942231682420}
   - component: {fileID: 2136637823309721297}
   - component: {fileID: 4664960390748941028}
+  - component: {fileID: -6259809068152597978}
   m_Layer: 0
   m_Name: Grain
   m_TagString: Untagged
@@ -45,11 +46,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86c968d916b7e104c977f60c5806d093, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isPlaying: 0
-  grainPitch: 1
-  audioClip: {fileID: 0}
+  _IsPlaying: 0
+  _GrainPitch: 0
+  _AudioClip: {fileID: 0}
+  _CurrentIndex: -1
   _Granulator: {fileID: 0}
-  grainWindow: []
 --- !u!82 &2136637823309721297
 AudioSource:
   m_ObjectHideFlags: 0
@@ -61,7 +62,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 24300001, guid: 1dd706bb85d8aef4e83a6229dbd62c36,
     type: 2}
-  m_audioClip: {fileID: 8300000, guid: 37c9e69911022452a9ebd4ee732ab036, type: 3}
+  m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -167,3 +168,19 @@ MonoBehaviour:
   volumetricRadius: 0
   reverbSend: 0
   enableRfl: 0
+--- !u!54 &-6259809068152597978
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1058601950276710}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
