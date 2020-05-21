@@ -146,12 +146,18 @@ public class Granulator : MonoBehaviour
         //    }
         //}
 
-        if (Input.GetKey(KeyCode.I))
+        if (Input.GetKeyDown(KeyCode.I))
         {
-            CreateGrainObject();
+            InvokeRepeating("CreateGrainObject", 0, 1.0f / _GrainDist);
+            //CreateGrainObject();
         }
 
-        CreateGrainObject();
+        if (Input.GetKeyUp(KeyCode.I))
+        {
+            CancelInvoke();
+        }
+
+        //CreateGrainObject();
 
         if (Input.GetKey(KeyCode.W))
             _RigidBody.AddForce(0, 0, _KeyboardForce);
