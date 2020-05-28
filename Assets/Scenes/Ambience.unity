@@ -164,7 +164,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52d46ef8bb542cb43830de3ae4cecb1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: 144
+  target: 60
 --- !u!1 &258545306
 GameObject:
   m_ObjectHideFlags: 0
@@ -367,7 +367,7 @@ ParticleSystem:
   cullingMode: 0
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 1
   useUnscaledTime: 0
@@ -436,7 +436,7 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 2
+      scalar: 1
       minScalar: 5
       maxCurve:
         serializedVersion: 2
@@ -979,7 +979,7 @@ ParticleSystem:
         m_RotationOrder: 4
   ShapeModule:
     serializedVersion: 6
-    enabled: 1
+    enabled: 0
     type: 0
     angle: 25
     length: 5
@@ -1181,12 +1181,12 @@ ParticleSystem:
           m_PostInfinity: 2
           m_RotationOrder: 4
   EmissionModule:
-    enabled: 1
+    enabled: 0
     serializedVersion: 4
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 30
+      scalar: 0
       minScalar: 10
       maxCurve:
         serializedVersion: 2
@@ -5138,18 +5138,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ParticleManager: {fileID: 1505029206}
   _MaxGrains: 100
-  _GrainLength: 472
-  _GrainLengthRand: 144
-  _GrainPos: 0.67
-  _GrainPosRand: 0.186
-  _GrainDist: 417
-  _GrainDistRand: 0
+  _GrainDuration: 100
+  _GrainDurationRandom: 0
+  _GrainPosition: 0
+  _GrainPositionRandom: 0
+  _TimeBetweenGrains: 10
+  _TimeBetweenGrainsRandom: 0
   _GrainPitch: 1
-  _GrainPitchRand: 0
-  _GrainVol: 1
-  _GrainVolRand: 0
-  _GrainAttack: 0.3
-  _GrainRelease: 0.3
+  _GrainPitchRandom: 0
+  _GrainVolume: 1
+  _GrainVolumeRandom: 0
   _IsPlaying: 1
   _AudioClip: {fileID: 8300000, guid: c077f065c0823b94c87827450298760f, type: 3}
   _GrainPrefab: {fileID: 1058601950276710, guid: 0439a9d037d24064abe436db9fded4c6,
@@ -5355,6 +5353,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d519125190603848b3ccef6013e1691, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _DummyParticleSystem: {fileID: 1695296867}
   _ParticleSystem: {fileID: 874552331}
 --- !u!1 &1695296864
 GameObject:
@@ -5368,7 +5367,7 @@ GameObject:
   - component: {fileID: 1695296867}
   - component: {fileID: 1695296866}
   m_Layer: 0
-  m_Name: Highlight Particles
+  m_Name: Dummy Particle System
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5466,12 +5465,12 @@ ParticleSystem:
   cullingMode: 0
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 1
   useUnscaledTime: 0
   autoRandomSeed: 1
-  useRigidbodyForVelocity: 1
+  useRigidbodyForVelocity: 0
   startDelay:
     serializedVersion: 2
     minMaxState: 0
@@ -5525,7 +5524,7 @@ ParticleSystem:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  moveWithTransform: 0
+  moveWithTransform: 1
   moveWithCustomTransform: {fileID: 0}
   scalingMode: 1
   randomSeed: 0
@@ -5535,7 +5534,7 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 5
+      scalar: 0.5
       minScalar: 5
       maxCurve:
         serializedVersion: 2
@@ -6020,7 +6019,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     randomizeRotationDirection: 0
-    maxNumParticles: 1000
+    maxNumParticles: 200
     size3D: 0
     rotation3D: 0
     gravityModifier:
@@ -6078,7 +6077,7 @@ ParticleSystem:
         m_RotationOrder: 4
   ShapeModule:
     serializedVersion: 6
-    enabled: 0
+    enabled: 1
     type: 4
     angle: 25
     length: 5

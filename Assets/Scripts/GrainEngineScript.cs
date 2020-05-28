@@ -39,11 +39,11 @@ public class GrainEngineScript : MonoBehaviour
     void Update()
     {
         if (minGrainPitch < 0) minGrainPitch = 0;
-        granulator._GrainLength = (int)map(RPM, 0.0f, 1f, minGrainLength, maxGrainLength);
-        granulator._GrainPos = map(RPM, 0.0f, 1f, minGrainPos, maxGrainPos);
-        granulator._GrainDist = (int)map(RPM, 0.0f, 1f, minGrainDist, maxGrainDist);
+        granulator._GrainDuration = (int)map(RPM, 0.0f, 1f, minGrainLength, maxGrainLength);
+        granulator._GrainPosition = map(RPM, 0.0f, 1f, minGrainPos, maxGrainPos);
+        granulator._TimeBetweenGrains = (int)map(RPM, 0.0f, 1f, minGrainDist, maxGrainDist);
         granulator._GrainPitch = map(RPM, 0.0f, 1f, minGrainPitch, maxGrainPitch);
-        granulator._GrainVol = map(RPM, 0.0f, 1f, minGrainVol,maxGrainVol);
+        granulator._GrainVolume = map(RPM, 0.0f, 1f, minGrainVol,maxGrainVol);
 
     }
 
