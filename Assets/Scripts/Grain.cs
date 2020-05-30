@@ -127,7 +127,7 @@ public class Grain : MonoBehaviour
             if (sampleIndex > _GrainOffset)
             for (int channel = 0; channel < _Channels; channel++)
                 _GrainSamples[sampleIndex + channel] = _Samples[sourceIndex + channel]
-                    * _GrainWindow[Mathf.RoundToInt(Map(sampleIndex - _GrainOffset, 0, _GrainSamples.Length -_GrainOffset, 0f, _GrainWindow.Length))];
+                    * _GrainWindow[Mathf.RoundToInt(Map(sampleIndex, _GrainOffset, _GrainSamples.Length, 0, _GrainWindow.Length))];
         }
 
         _CurrentIndex = -1;
@@ -171,6 +171,7 @@ public class Grain : MonoBehaviour
                     data[bufferIndex + channel] = 0;
             }
         }
+
 
         // If this grain is not playing but it's still in active pool, remove from active pool and place in inactive pool
         //if (!_IsPlaying && _Granulator._ActivePool.Contains(this))

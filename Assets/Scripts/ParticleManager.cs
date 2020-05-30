@@ -34,23 +34,21 @@ public class ParticleManager : MonoBehaviour
 
         _ParticleSystem.Emit(emitParams, 1);
     }
-    public ParticleSystem.Particle SpawnRandomParticle(float life)
+    public ParticleSystem.Particle SpawnRandomParticle(Vector3 inheritVelocity, float startSpeed, float life)
     {
+        ParticleSystem.MainModule main = _DummyParticleSystem.main;
         // Emit particle in the dummy system, get its values, then kill the particle
+        main.startSpeed = startSpeed;
         _DummyParticleSystem.Emit(1);
         _DummyParticleSystem.GetParticles(_DummyParticle);
         _DummyParticleSystem.Clear();
 
-        // Get the dummy particle's position and velocity
-        Vector3 position = _DummyParticle[0].position;
-        Vector3 velocity = _DummyParticle[0].velocity;
-
-        // Generate new emit params based on those values and life passed into the function
+        // Generate new emit params based on dummy particle and life passed into the function
         ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams();
-        emitParams.position = position;
-        emitParams.velocity = velocity;
-        //emitParams.startLifetime = life / 1000;
-        emitParams.startLifetime = 1;
+        emitParams.position = _DummyParticle[0].position;
+        emitParams.velocity = _DummyParticle[0].velocity + inheritVelocity;
+        emitParams.startLifetime = life;
+        //emitParams.startLifetime = 1;
 
         // Emit particle in main particle system based on those values
         _ParticleSystem.Emit(emitParams, 1);

@@ -2396,7 +2396,7 @@ ParticleSystem:
     m_Curve:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0
+      scalar: 1
       minScalar: 0
       maxCurve:
         serializedVersion: 2
@@ -3875,7 +3875,7 @@ ParticleSystem:
         m_NumAlphaKeys: 2
     range: {x: 0, y: 1}
   CollisionModule:
-    enabled: 1
+    enabled: 0
     serializedVersion: 3
     type: 0
     collisionMode: 0
@@ -5011,6 +5011,36 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
+--- !u!1 &996187816
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 996187817}
+  m_Layer: 0
+  m_Name: Grain Objects
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &996187817
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 996187816}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.70781875, y: -2.6132355, z: -6.3066254}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1076217900
 GameObject:
   m_ObjectHideFlags: 0
@@ -5020,11 +5050,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1076217901}
+  - component: {fileID: 1076217906}
   - component: {fileID: 1076217905}
   - component: {fileID: 1076217904}
   - component: {fileID: 1076217903}
   - component: {fileID: 1076217902}
-  - component: {fileID: 1076217906}
   m_Layer: 0
   m_Name: ParticleSphere
   m_TagString: Untagged
@@ -5137,22 +5167,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ParticleManager: {fileID: 1505029206}
+  _GrainObjectHolder: {fileID: 996187816}
+  _GrainPrefab: {fileID: 1058601950276710, guid: 0439a9d037d24064abe436db9fded4c6,
+    type: 3}
+  _AudioClip: {fileID: 8300000, guid: c077f065c0823b94c87827450298760f, type: 3}
+  _IsPlaying: 1
   _MaxGrains: 100
-  _GrainDuration: 100
-  _GrainDurationRandom: 0
-  _GrainPosition: 0
-  _GrainPositionRandom: 0
+  _GrainDuration: 605
+  _GrainDurationRandom: 10
+  _GrainPosition: 0.939
+  _GrainPositionRandom: 0.05
   _TimeBetweenGrains: 10
   _TimeBetweenGrainsRandom: 0
   _GrainPitch: 1
-  _GrainPitchRandom: 0
-  _GrainVolume: 1
+  _GrainPitchRandom: 0.01
+  _GrainVolume: 2
   _GrainVolumeRandom: 0
-  _IsPlaying: 1
-  _AudioClip: {fileID: 8300000, guid: c077f065c0823b94c87827450298760f, type: 3}
-  _GrainPrefab: {fileID: 1058601950276710, guid: 0439a9d037d24064abe436db9fded4c6,
-    type: 3}
   _MoveGrains: 1
+  _GrainSpeedOnBirth: 0
   _KeyboardForce: 30
   _GrainObjects: []
 --- !u!1 &1110933643
@@ -6078,7 +6110,7 @@ ParticleSystem:
   ShapeModule:
     serializedVersion: 6
     enabled: 1
-    type: 4
+    type: 0
     angle: 25
     length: 5
     boxThickness: {x: 0, y: 0, z: 0}
@@ -7494,7 +7526,7 @@ ParticleSystem:
     m_Curve:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 0
+      scalar: 1
       minScalar: 0
       maxCurve:
         serializedVersion: 2

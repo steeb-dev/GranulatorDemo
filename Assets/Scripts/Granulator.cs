@@ -7,20 +7,27 @@ public class Granulator : MonoBehaviour
     public ParticleManager _ParticleManager;
     private ParticleSystem.Particle _Particle;
 
+    public GameObject _GrainObjectHolder;
+    public GameObject _GrainPrefab;
+
+    public AudioClip _AudioClip;
+    public bool _IsPlaying = true;       // the on/off button
+
+
     public int _MaxGrains = 100;
-    [Range(0.0f, 3000f)]
-    public int _GrainDuration = 100;       // ms
+    [Range(2.0f, 3000f)]
+    public int _GrainDuration = 300;       // ms
     [Range(0.0f, 1000f)]
     public int _GrainDurationRandom = 0;     // ms
     [Range(0.0f, 1.0f)]
     public float _GrainPosition = 0;          // from 0 > 1
     [Range(0.0f, 1.0f)]
     public float _GrainPositionRandom = 0;      // from 0 > 1
-    [Range(0.0f, 1000f)]
+    [Range(1.0f, 1000f)]
     public int _TimeBetweenGrains = 20;          // ms
     [Range(0.0f, 1000f)]
     public int _TimeBetweenGrainsRandom = 0;       // ms
-    [Range(0.0f, 5f)]
+    [Range(0.1f, 5f)]
     public float _GrainPitch = 1;
     [Range(0.0f, 1f)]
     public float _GrainPitchRandom = 0;
@@ -28,18 +35,15 @@ public class Granulator : MonoBehaviour
     public float _GrainVolume = 1;          // from 0 > 1
     [Range(0.0f, 1.0f)]
     public float _GrainVolumeRandom = 0;      // from 0 > 1
-
-    public bool _IsPlaying = true;       // the on/off button
-
-    public AudioClip _AudioClip;
-    public GameObject _GrainPrefab;
+    
     private AudioClip _LastClip;
     
     // Temp vars
     private int _NewGrainPosition = 0;
     private float _NewGrainPitch = 0;
     private float _NewGrainPitchRandom = 0;
-    private int _NewGrainDuration = 0;
+    private int _NewGrainDurationInSamps = 0;
+    private float _NewGrainDurationInMS = 0;
     private int _NewGrainDensity = 0;
     private float _NewGrainVolume = 0;
 
@@ -49,7 +53,7 @@ public class Granulator : MonoBehaviour
     private float _UpdateTime;
     private float _GrainsPerUpdate;
     private int _LastGrainStart;
-    private List<int> _UpdateGrainOffsetList;
+    private List<int> _GrainTriggerOffsetList;
     private int _TimeSinceStart;
 
 
@@ -57,6 +61,8 @@ public class Granulator : MonoBehaviour
 
 
     public bool _MoveGrains = true;
+    [Range(0.0f, 30.0f)]
+    public float _GrainSpeedOnBirth = 5.0f;
     public float _KeyboardForce = 1;
 
     public List<GameObject> _GrainObjects;
@@ -69,7 +75,7 @@ public class Granulator : MonoBehaviour
     private void Start()
     {
         this.gameObject.AddComponent<AudioSource>();
-        _UpdateGrainOffsetList = new List<int>();
+        _GrainTriggerOffsetList = new List<int>();
         _LastGrainStart = 0;
     }
 
@@ -91,6 +97,7 @@ public class Granulator : MonoBehaviour
             CreateWindow();
         }
 
+        // Remove finished grains
         for (int i = _GrainObjects.Count - 1; i >= 0; i--)
         {
             if (_GrainObjects[i] != null && !_GrainObjects[i].GetComponent<Grain>()._IsPlaying)
@@ -103,9 +110,9 @@ public class Granulator : MonoBehaviour
         // Clamp values to reasonable ranges
         _GrainPosition = Clamp(_GrainPosition, 0, 1);
         _GrainPositionRandom = Clamp(_GrainPositionRandom, 0, 1);
-        _TimeBetweenGrains = (int)Clamp(_TimeBetweenGrains, 1, 10000);
-        _TimeBetweenGrainsRandom = (int)Clamp(_TimeBetweenGrainsRandom, 0, 10000);
-        _GrainDurationRandom = (int)Clamp(_GrainDurationRandom, 0, 10000);
+        _TimeBetweenGrains = (int)Clamp(_TimeBetweenGrains, 1, 1000);
+        _TimeBetweenGrainsRandom = (int)Clamp(_TimeBetweenGrainsRandom, 0, 1000);
+        _GrainDurationRandom = (int)Clamp(_GrainDurationRandom, 0, 1000);
 
         _GrainPitch = Clamp(_GrainPitch, 0, 1000);
         _GrainPitchRandom = Clamp(_GrainPitchRandom, 0, 1000);
@@ -116,71 +123,48 @@ public class Granulator : MonoBehaviour
         _NewGrainPosition = (int)((_GrainPosition + Random.Range(0, _GrainPositionRandom)) * _AudioClip.samples);
         _NewGrainPitch = _GrainPitch;
         _NewGrainPitchRandom = Random.Range(-_GrainPitchRandom, _GrainPitchRandom);
-        _NewGrainDuration = (int)(_AudioClip.frequency / 1000 * (_GrainDuration + Random.Range(0, _GrainDurationRandom)));
+        _NewGrainDurationInMS = (_GrainDuration + Random.Range(0, _GrainDurationRandom));
+        _NewGrainDurationInSamps = (int)(44100 / 1000 * _NewGrainDurationInMS);
+        
         _NewGrainDensity = _TimeBetweenGrains + Random.Range(0, _TimeBetweenGrainsRandom);
 
         _NewGrainVolume = Clamp(_GrainVolume + Random.Range(-_GrainVolumeRandom, _GrainVolumeRandom), 0, 3);
 
 
 
-
-
-        // Get time between last frame for grain density triggering
-        _UpdateTime = Time.fixedDeltaTime;
-        Debug.Log("----------------------------");
-        Debug.Log("Update time: " + _UpdateTime * 1000);
-        Debug.Log("Grain density: " + _NewGrainDensity);
+        // Get update time and game time
+        _UpdateTime = Time.fixedDeltaTime * 1000;
+        _TimeSinceStart = (int)((Time.time) * 1000);
 
         // Calculate how many grains should be created this update
-        _GrainsPerUpdate = (_UpdateTime * 1000) / (float)_NewGrainDensity;
-        Debug.Log("Grains per update " + _GrainsPerUpdate);
-
-
-        _UpdateGrainOffsetList.Clear();
-
-        _TimeSinceStart = (int) ((Time.time) * 1000);
+        _GrainsPerUpdate = (_UpdateTime) / (float)_NewGrainDensity;
         
-        Debug.Log("Time since start: " + _TimeSinceStart);
-        Debug.Log("Time of last grain: " + _LastGrainStart);
-        Debug.Log("Next grain due: " + (_LastGrainStart + _NewGrainDensity));
 
-
-        for (int i = _TimeSinceStart; i < _TimeSinceStart + _UpdateTime; i++)
+        // Clear and repopulate grains to be played this frame (if there are any)
+        _GrainTriggerOffsetList.Clear();
+        for (int i = _TimeSinceStart; i < _TimeSinceStart + (int)_UpdateTime; i++)
         {
             // If (another) grain is to be played this update
             if (i >= _LastGrainStart + _NewGrainDensity)
             {
                 // Add grain to playback offset list
-                _UpdateGrainOffsetList.Add(i * _AudioClip.frequency / 1000);
-                // And set _LastGrain start to that grain time offset
-                _LastGrainStart = i + _NewGrainDensity;
+                _GrainTriggerOffsetList.Add( (int)(44100 / 1000 * ( i - _TimeSinceStart )));
+                
+                // And update last grain starting time to the newly added grain
+                _LastGrainStart = i;
             }
         }
 
-        Debug.Log("Grains to play this update: " + _UpdateGrainOffsetList.Count);
-
-
-        foreach (int offset in _UpdateGrainOffsetList)
+        // Create grain objects
+        foreach (int offset in _GrainTriggerOffsetList)
         {
             CreateGrainObject(offset);
         }
 
 
 
-        // GRAIN TEST KEY TRIGGERS
+        // GRAIN TEST KEYS
 
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            InvokeRepeating("CreateGrainObject", 0, 1.0f / _TimeBetweenGrains);
-            //CreateGrainObject();
-        }
-
-        if (Input.GetKeyUp(KeyCode.I))
-        {
-            CancelInvoke();
-        }
-
-        //CreateGrainObject();
 
         if (Input.GetKey(KeyCode.W))
             _RigidBody.AddForce(0, 0, _KeyboardForce);
@@ -213,70 +197,41 @@ public class Granulator : MonoBehaviour
 
 
             // Start grain
-            g.PlayGrain(_NewGrainPosition, _NewGrainDuration, _NewGrainPitch, _NewGrainPitchRandom, _NewGrainVolume, _Window);
+            g.PlayGrain(_NewGrainPosition, _NewGrainDurationInSamps, _NewGrainPitch, _NewGrainPitchRandom, _NewGrainVolume, _Window);
         }
     }
 
 
     void CreateGrainObject(int offset)
     {
-        // Redundant?
-        _ParticleCount = _ParticleManager.GetParticleCount();
-
         if (_GrainObjects.Count < _MaxGrains)
         {
             // Create new grain object
             GameObject tmp = Instantiate(_GrainPrefab);
-            tmp.transform.parent = this.transform;
+            tmp.transform.parent = _GrainObjectHolder.transform;
 
-            // Initialise the particle
+            Vector3 inheritVelocity = _RigidBody.velocity * 0.5f;
+
+            // Initialise the grain
             Grain g = tmp.GetComponent<Grain>();
             g._Granulator = this;
             g.Initialise(_AudioClip);
             _GrainObjects.Add(tmp);
 
             // Generate new particle in particle system and return it here
-            _Particle = _ParticleManager.SpawnRandomParticle(_NewGrainDuration);
+            _Particle = _ParticleManager.SpawnRandomParticle(inheritVelocity, _GrainSpeedOnBirth, _NewGrainDurationInMS / 1000);
 
-            // Provide grain object with generated particle transforms
+            // Provide grain object with particle transform for spatialisation and movement
             Rigidbody tmpRB = tmp.GetComponent<Rigidbody>();
             tmp.transform.position = _Particle.position;
-            tmpRB.velocity = _Particle.velocity;
+            tmpRB.velocity = _Particle.velocity + inheritVelocity;
 
-            // Start grain
-            g.PlayGrain(_NewGrainPosition, _NewGrainDuration, _NewGrainPitch, _NewGrainPitchRandom, _NewGrainVolume, _Window, offset);
+            // Start grain using current update's information
+            g.PlayGrain(_NewGrainPosition, _NewGrainDurationInSamps, _NewGrainPitch, _NewGrainPitchRandom, _NewGrainVolume, _Window, offset);
         }
     }
 
 
-    //void SeedAllInactiveGrains()
-    //{
-    //    for (int i = _InactivePool.Count - 1; i >= 0; i--)
-    //    {
-    //        // Seed new grain
-    //        SeedNewGrain(_InactivePool[i]);
-
-    //        // Move grain from inactive to active pool
-    //        _ActivePool.Add(_InactivePool[i]);
-    //        _InactivePool.RemoveAt(i);
-    //    }
-    //}
-
-
-    //void SeedNewGrain(Grain g)
-    //{
-    //    // Refresh grain if audio clip has changed
-    //    if (g._AudioClip != _AudioClip)
-    //    {
-    //        g._AudioClip = _AudioClip;
-    //        g.UpdateGrain();
-    //    }
-
-    //    _Particle = _ParticleManager.GetRandomParticle();
-
-    //    // Start new grain
-    //    g.PlayGrain(_NewGrainPos, _NewGrainLength, _NewGrainPitch, _NewGrainPitchRand, _NewGrainVol, _Window, _Particle);
-    //}
 
 
     //---------------------------------------------------------------------
@@ -290,10 +245,11 @@ public class Granulator : MonoBehaviour
     // Generate windowing function lookup table
     void CreateWindow()
     {
-        _Window = new float[_AudioClip.frequency];
+        _Window = new float[44100];
+
         for (int i = 0; i < _Window.Length; i++)
         {
-            _Window[i] = (float)0.5 * (1 - Mathf.Cos(2 * Mathf.PI * i / _AudioClip.frequency));
+            _Window[i] = (float)0.5 * (1 - Mathf.Cos(2 * Mathf.PI * i / 44100));
         }
     }
 }
