@@ -50,11 +50,8 @@ public class Granulator : MonoBehaviour
     private int _Channels;
     private int _GrainTimer = 0;
     private int _ParticleCount;
-    private float _UpdateTime;
-    private float _GrainsPerUpdate;
-    private int _LastGrainStart;
     private List<int> _GrainTriggerOffsetList;
-    private int _TimeSinceStart;
+    private int _LastGrainStartInSamples;
 
 
     private Rigidbody _RigidBody;
@@ -70,13 +67,15 @@ public class Granulator : MonoBehaviour
 
     private float[] _Window;
 
+    private const int _SampleRate = 44100;
+
 
     //---------------------------------------------------------------------
     private void Start()
     {
         this.gameObject.AddComponent<AudioSource>();
         _GrainTriggerOffsetList = new List<int>();
-        _LastGrainStart = 0;
+        _LastGrainStartInSamples = 0;
     }
 
     void Awake()
@@ -89,7 +88,7 @@ public class Granulator : MonoBehaviour
     // would be good if actually every grain will get freshly randomized values, but idk if that's possible... 
     // updating the random-vals every frame has to suffice for now... :/
     //---------------------------------------------------------------------
-    void FixedUpdate()
+    void Update()
     {
         if (_LastClip != _AudioClip)
         {
@@ -132,28 +131,29 @@ public class Granulator : MonoBehaviour
 
 
 
-        // Get update time and game time
-        _UpdateTime = Time.fixedDeltaTime * 1000;
-        _TimeSinceStart = (int)((Time.time) * 1000);
+        int samplesPerUpdate = (int)(Time.deltaTime * _SampleRate);
+        int samplesSinceStart = (int)(Time.time * _SampleRate);
+        int densityInSamples = _NewGrainDensity * (_SampleRate / 1000);
 
-        // Calculate how many grains should be created this update
-        _GrainsPerUpdate = (_UpdateTime) / (float)_NewGrainDensity;
-        
+        Debug.Log("----------------------------------------");
+        Debug.Log("Samples per update: " + samplesPerUpdate);
+        Debug.Log("Last grain in samples: " + _LastGrainStartInSamples);
+        Debug.Log("Density in samples: " + densityInSamples);
+        Debug.Log("Approx grains per update: " + (samplesPerUpdate / densityInSamples));
+        Debug.Log("Next grain sample: " + (_LastGrainStartInSamples + densityInSamples));
 
-        // Clear and repopulate grains to be played this frame (if there are any)
-        _GrainTriggerOffsetList.Clear();
-        for (int i = _TimeSinceStart; i < _TimeSinceStart + (int)_UpdateTime; i++)
+
+        for (int i = samplesSinceStart; i < samplesSinceStart + samplesPerUpdate; i++)
         {
-            // If (another) grain is to be played this update
-            if (i >= _LastGrainStart + _NewGrainDensity)
+            if (i >= _LastGrainStartInSamples + densityInSamples)
             {
-                // Add grain to playback offset list
-                _GrainTriggerOffsetList.Add( (int)(44100 / 1000 * ( i - _TimeSinceStart )));
-                
-                // And update last grain starting time to the newly added grain
-                _LastGrainStart = i;
+                _GrainTriggerOffsetList.Add(i - samplesSinceStart);
+                _LastGrainStartInSamples = i;
             }
         }
+
+        Debug.Log("Actual grains this update: " + _GrainTriggerOffsetList.Count);
+
 
         // Create grain objects
         foreach (int offset in _GrainTriggerOffsetList)
@@ -161,6 +161,7 @@ public class Granulator : MonoBehaviour
             CreateGrainObject(offset);
         }
 
+        _GrainTriggerOffsetList.Clear();
 
 
         // GRAIN TEST KEYS
@@ -253,3 +254,6 @@ public class Granulator : MonoBehaviour
         }
     }
 }
+
+
+public class ReadOnlyAttribute { }

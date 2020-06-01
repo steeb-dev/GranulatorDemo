@@ -88,12 +88,12 @@ public class Grain : MonoBehaviour
     float newGrainPitchRand, float newGrainVol, float[] window, int offset)
     {
         _GrainPos = (int)((newGrainPos / _Channels)) * _Channels; // Rounding to make sure pos always starts at first channel
-        _GrainLength = newGrainLength + offset * _AudioBufferSize;
+        _GrainLength = newGrainLength + offset;
         _GrainPitch = newGrainPitch;
         _GrainPitchRand = newGrainPitchRand;
         _GrainVol = newGrainVol;
         _GrainWindow = window;
-        _GrainOffset = offset * _AudioBufferSize;
+        _GrainOffset = offset;
 
         _IsPlaying = true;
 
@@ -125,9 +125,11 @@ public class Grain : MonoBehaviour
 
             // For each channel, populate buffer with sample from audio clip and apply windowing from lookup array
             if (sampleIndex > _GrainOffset)
-            for (int channel = 0; channel < _Channels; channel++)
-                _GrainSamples[sampleIndex + channel] = _Samples[sourceIndex + channel]
-                    * _GrainWindow[Mathf.RoundToInt(Map(sampleIndex, _GrainOffset, _GrainSamples.Length, 0, _GrainWindow.Length))];
+                for (int channel = 0; channel < _Channels; channel++)
+                {
+                        _GrainSamples[sampleIndex + channel] = _Samples[sourceIndex + channel - _GrainOffset]
+                            * _GrainWindow[Mathf.RoundToInt(Map(sampleIndex, _GrainOffset, _GrainSamples.Length, 0, _GrainWindow.Length))];
+                }
         }
 
         _CurrentIndex = -1;
