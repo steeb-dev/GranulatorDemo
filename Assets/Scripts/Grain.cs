@@ -89,6 +89,10 @@ public class Grain : MonoBehaviour
 
         int sourceIndex;
 
+
+        Debug.Log("----------------------------------------");
+        Debug.Log("----------------------------------------");
+
         // Construct grain sample data (including 0s for timing offset)
         for (int i = 0; i < _GrainSamples.Length - _Channels; i += _Channels)
         {
@@ -124,7 +128,7 @@ public class Grain : MonoBehaviour
 
     private float Windowing(int currentSample, int grainLength)
     {
-        float outputSample = (float)0.5 * (1 - Mathf.Cos(2 * Mathf.PI * currentSample / grainLength));
+        float outputSample = 0.5f * (1 - Mathf.Cos(2 * Mathf.PI * currentSample / grainLength));
 
         return outputSample;
     }

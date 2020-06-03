@@ -148,7 +148,7 @@ public class Granulator : MonoBehaviour
 
 
 
-        Debug.Log("----------------------------------------");
+        //Debug.Log("----------------------------------------");
 
         // Building above idea
         int samplesSinceLastGrain = _SamplesSinceLastGrain - samplesLastUpdate;
@@ -219,7 +219,7 @@ public class Granulator : MonoBehaviour
             CreateMovementGrain(offset);
 
 
-        Debug.Log("Total active grains: " + _GrainObjects.Count);
+        //Debug.Log("Total active grains: " + _GrainObjects.Count);
 
 
         // GRAIN TEST KEYS
@@ -303,7 +303,7 @@ public class Granulator : MonoBehaviour
 
         for (int i = 0; i < _Window.Length; i++)
         {
-            _Window[i] = (float)0.5 * (1 - Mathf.Cos(2 * Mathf.PI * i / _SampleRate));
+            _Window[i] = 0.5f * (1 - Mathf.Cos(2 * Mathf.PI * i / _SampleRate));
         }
     }
 }
