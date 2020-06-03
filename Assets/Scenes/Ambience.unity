@@ -5172,21 +5172,23 @@ MonoBehaviour:
     type: 3}
   _AudioClip: {fileID: 8300000, guid: c077f065c0823b94c87827450298760f, type: 3}
   _IsPlaying: 1
-  _MaxGrains: 100
+  _ParticleMode: 0
+  _MaxGrains: 50
   _GrainDuration: 150
   _GrainDurationRandom: 10
-  _GrainPosition: 0.939
+  _GrainPosition: 0.555
   _GrainPositionRandom: 0.05
-  _TimeBetweenGrains: 10
+  _TimeBetweenGrains: 325
   _TimeBetweenGrainsRandom: 0
   _GrainPitch: 1
   _GrainPitchRandom: 0.01
   _GrainVolume: 2
   _GrainVolumeRandom: 0
   _MoveGrains: 1
+  _Gravity: 1
+  _Collisions: 1
   _GrainSpeedOnBirth: 0
   _KeyboardForce: 30
-  _GrainObjects: []
 --- !u!1 &1110933643
 GameObject:
   m_ObjectHideFlags: 0

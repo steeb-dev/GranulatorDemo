@@ -9,6 +9,9 @@ public class ParticleManager : MonoBehaviour
     private ParticleSystem.Particle[] _Particles;
     private ParticleSystem.Particle[] _DummyParticle;
 
+    private bool _Gravity;
+    private bool _Collisions;
+
     [System.Obsolete]
     private void Awake()
     {
@@ -23,6 +26,16 @@ public class ParticleManager : MonoBehaviour
 
     void Update()
     {
+    }
+
+    public void SetGravity (bool gravity)
+    {
+        _Gravity = gravity;
+    }
+
+    public void SetCollisions(bool collisions)
+    {
+        _Collisions = collisions;
     }
 
     public void SpawnParticle(Vector3 position, Vector3 velocity)

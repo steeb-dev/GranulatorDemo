@@ -19,7 +19,6 @@ public class Grain : MonoBehaviour
     private float[] _GrainSamples;
     private int _Channels;
     public int _CurrentIndex = -1;
-    private float[] _GrainWindow;
     private int _AudioBufferSize;
     private int _AudioBufferNum;
     private int _GrainOffset;
@@ -30,69 +29,51 @@ public class Grain : MonoBehaviour
     void Start()
     {
         AudioSettings.GetDSPBufferSize(out _AudioBufferSize, out _AudioBufferNum);
+    }
 
-        UpdateGrain();
-
+    public void Initialise(AudioClip audioClip)
+    {
         _AudioSource = GetComponent<AudioSource>();
 
         if (_AudioSource == null)
         {
             _AudioSource = this.gameObject.AddComponent<AudioSource>();
         }
-    }
 
-    public void Initialise(AudioClip audioClip)
-    {
+
         _AudioClip = audioClip;
 
         _Samples = new float[_AudioClip.samples * _AudioClip.channels];
         _Channels = _AudioClip.channels;
         _AudioClip.GetData(_Samples, 0);
+        _GrainOffset = 0;
+
+
+        Debug.Log("SAMPLES IN AUDIO CLIP: " + _Samples.Length);
     }
 
-    //---------------------------------------------------------------------
-    public void UpdateGrain()
-    {
-        _Samples = new float[_AudioClip.samples * _AudioClip.channels];
-        _Channels = _AudioClip.channels;
-        _AudioClip.GetData(_Samples, 0);
-        _GrainOffset = 0;
-    }
 
     //---------------------------------------------------------------------
     void Update()
     {
+        // Updates pitch
         _AudioSource.pitch = _GrainPitch + _GrainPitchRand;
+
+        if (this.transform.position.sqrMagnitude > 10000)
+            _IsPlaying = false;
     }
 
 
-    //---------------------------------------------------------------------
-    public void PlayGrain(
-        int newGrainPos, int newGrainLength, float newGrainPitch,
-        float newGrainPitchRand, float newGrainVol, float[] window)
-    {
-        _GrainPos = (int)((newGrainPos / _Channels)) * _Channels; // Rounding to make sure pos always starts at first channel
-        _GrainLength = newGrainLength;
-        _GrainPitch = newGrainPitch;
-        _GrainPitchRand = newGrainPitchRand;
-        _GrainVol = newGrainVol;
-        _GrainWindow = window;
-        _IsPlaying = true;
-
-        BuildSampleArray();
-    }
-
 
     public void PlayGrain(
-    int newGrainPos, int newGrainLength, float newGrainPitch,
-    float newGrainPitchRand, float newGrainVol, float[] window, int offset)
+    float newGrainPos, int newGrainLength, float newGrainPitch,
+    float newGrainPitchRand, float newGrainVol, int offset)
     {
-        _GrainPos = (int)((newGrainPos / _Channels)) * _Channels; // Rounding to make sure pos always starts at first channel
+        _GrainPos = (int)((newGrainPos * _Samples.Length)); // Rounding to make sure pos always starts at first channel
         _GrainLength = newGrainLength + offset;
         _GrainPitch = newGrainPitch;
         _GrainPitchRand = newGrainPitchRand;
         _GrainVol = newGrainVol;
-        _GrainWindow = window;
         _GrainOffset = offset;
 
         _IsPlaying = true;
@@ -106,33 +87,46 @@ public class Grain : MonoBehaviour
     {
         _GrainSamples = new float[_GrainLength];
 
-        for (int i = 0; i < _GrainOffset; i++)
+        int sourceIndex;
+
+        // Construct grain sample data (including 0s for timing offset)
+        for (int i = 0; i < _GrainSamples.Length - _Channels; i += _Channels)
         {
-            _GrainSamples[i] = 0;
-        }
-
-        // Start position of grain
-        int sourceIndex = _GrainPos;
-
-        // Build array of samples for this grain
-        for (int sampleIndex = 0; sampleIndex < _GrainSamples.Length - _Channels; sampleIndex += _Channels)
-        {
-            sourceIndex = _GrainPos + sampleIndex;
-
-            // Loop the file if the grain is longer than the source-audio
+            // Set source audio sample position for grain, and loop to start if the grain is longer than source-audio
+            sourceIndex = _GrainPos + i;
             while (sourceIndex + _Channels > _Samples.Length)
                 sourceIndex -= _Samples.Length;
+            
+            // HACCCCCKKKY SHIT
+            if (sourceIndex < 0)
+                sourceIndex = 0;
 
-            // For each channel, populate buffer with sample from audio clip and apply windowing from lookup array
-            if (sampleIndex > _GrainOffset)
+            // Populate 0s for grain timing offset
+            if (i < _GrainOffset)
+                _GrainSamples[i] = 0;
+
+            // Populate with source audio for remainder and apply windowing
+            else
+            {
                 for (int channel = 0; channel < _Channels; channel++)
                 {
-                        _GrainSamples[sampleIndex + channel] = _Samples[sourceIndex + channel - _GrainOffset]
-                            * _GrainWindow[Mathf.RoundToInt(Map(sampleIndex, _GrainOffset, _GrainSamples.Length, 0, _GrainWindow.Length))];
+                    //_GrainSamples[i + channel] = _Samples[sourceIndex + channel - _GrainOffset]
+                    //    * _GrainWindow[Mathf.RoundToInt(Map(i, _GrainOffset, _GrainSamples.Length, 0, _GrainWindow.Length))];
+
+                    _GrainSamples[i + channel] = _Samples[sourceIndex + channel]
+                        * Windowing(i - _GrainOffset, _GrainSamples.Length - _GrainOffset);
                 }
+            }
         }
 
         _CurrentIndex = -1;
+    }
+
+    private float Windowing(int currentSample, int grainLength)
+    {
+        float outputSample = (float)0.5 * (1 - Mathf.Cos(2 * Mathf.PI * currentSample / grainLength));
+
+        return outputSample;
     }
 
 
