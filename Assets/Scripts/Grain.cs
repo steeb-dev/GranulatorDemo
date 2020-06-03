@@ -47,18 +47,12 @@ public class Grain : MonoBehaviour
         _Channels = _AudioClip.channels;
         _AudioClip.GetData(_Samples, 0);
         _GrainOffset = 0;
-
-
-        Debug.Log("SAMPLES IN AUDIO CLIP: " + _Samples.Length);
     }
 
 
     //---------------------------------------------------------------------
     void Update()
     {
-        // Updates pitch
-        _AudioSource.pitch = _GrainPitch + _GrainPitchRand;
-
         if (this.transform.position.sqrMagnitude > 10000)
             _IsPlaying = false;
     }
@@ -66,13 +60,11 @@ public class Grain : MonoBehaviour
 
 
     public void PlayGrain(
-    float newGrainPos, int newGrainLength, float newGrainPitch,
-    float newGrainPitchRand, float newGrainVol, int offset)
+    float newGrainPos, int newGrainLength, float newGrainPitch, float newGrainVol, int offset)
     {
         _GrainPos = (int)((newGrainPos * _Samples.Length)); // Rounding to make sure pos always starts at first channel
         _GrainLength = newGrainLength + offset;
-        _GrainPitch = newGrainPitch;
-        _GrainPitchRand = newGrainPitchRand;
+        _AudioSource.pitch = newGrainPitch;
         _GrainVol = newGrainVol;
         _GrainOffset = offset;
 
@@ -82,16 +74,13 @@ public class Grain : MonoBehaviour
     }
 
 
+
     //---------------------------------------------------------------------
     private void BuildSampleArray()
     {
         _GrainSamples = new float[_GrainLength];
 
         int sourceIndex;
-
-
-        Debug.Log("----------------------------------------");
-        Debug.Log("----------------------------------------");
 
         // Construct grain sample data (including 0s for timing offset)
         for (int i = 0; i < _GrainSamples.Length - _Channels; i += _Channels)
