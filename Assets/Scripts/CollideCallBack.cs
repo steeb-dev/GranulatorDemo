@@ -11,7 +11,7 @@ public class CollideCallBack : MonoBehaviour
 
     void Start()
     {
-        _ParticleSystem = _ParticleManager._MovementParticleSystem;
+        _ParticleSystem = _ParticleManager._EmitterParticleSystem;
         _CollisionEvents = new List<ParticleCollisionEvent>();
     }
 

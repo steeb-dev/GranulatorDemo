@@ -13,28 +13,8 @@ public class Granulator : MonoBehaviour
     public GameObject _GrainObjectHolder;
     public GameObject _GrainPrefab;
 
-    public AudioClip _MovementAudioClip;
-    [Range(0.0f, 1.0f)]
-    public float _GrainPosition = 0;          // from 0 > 1
-    [Range(0.0f, 1.0f)]
-    public float _GrainPositionRandom = 0;      // from 0 > 1
-
-
-    public AudioClip _CollisionAudioClip;
-    [Range(0.0f, 1.0f)]
-    public float _CollisionGrainPosition = 0;          // from 0 > 1
-    [Range(0.0f, 1.0f)]
-    public float _CollisionPositionRandom = 0;      // from 0 > 1
-    public int _CollisionGrainBurst = 5;
-
-    public enum ParticleMode { Spawning, Static };
-    public ParticleMode _ParticleMode = ParticleMode.Spawning;
 
     public int _MaxGrains = 100;
-    [Range(2.0f, 3000f)]
-    public int _GrainDuration = 300;       // ms
-    [Range(0.0f, 1000f)]
-    public int _GrainDurationRandom = 0;     // ms
 
     [Range(1.0f, 1000f)]
     public int _TimeBetweenGrains = 20;          // ms
@@ -49,14 +29,40 @@ public class Granulator : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float _GrainVolumeRandom = 0;      // from 0 > 1
 
+
+    public AudioClip _MovementAudioClip;
+    [Range(0.0f, 1.0f)]
+    public float _GrainPosition = 0;          // from 0 > 1
+    [Range(0.0f, 1.0f)]
+    public float _GrainPositionRandom = 0;      // from 0 > 1
+    [Range(2.0f, 3000f)]
+    public int _GrainDuration = 300;       // ms
+    [Range(0.0f, 1000f)]
+    public int _GrainDurationRandom = 0;     // ms
+
+    public AudioClip _CollisionAudioClip;
+    [Range(0.0f, 1.0f)]
+    public float _CollisionGrainPosition = 0;          // from 0 > 1
+    [Range(0.0f, 1.0f)]
+    public float _CollisionPositionRandom = 0;      // from 0 > 1
+    [Range(2.0f, 3000f)]
+    public int _CollisionDuration = 300;       // ms
+    [Range(0.0f, 1000f)]
+    public int _CollisionDurationRandom = 0;     // ms
+
+    public int _CollisionGrainBurst = 5;
+
+    public enum ParticleMode { Spawning, Static };
+    public ParticleMode _ParticleMode = ParticleMode.Spawning;
+
     
     // Temp vars
     private float _NewGrainPosition = 0;
     private float _NewCollisionGrainPosition = 0;
     private float _NewGrainPitch = 0;
     private float _NewGrainPitchRandom = 0;
-    private int _NewGrainDurationInSamps = 0;
-    private float _NewGrainDurationInMS = 0;
+    private int _NewGrainDuration = 0;
+    private int _NewCollisionDuration;
     private int _NewGrainDensity = 0;
     private float _NewGrainVolume = 0;
 
@@ -70,19 +76,20 @@ public class Granulator : MonoBehaviour
 
     public bool _MoveGrains = true;
     public bool _Gravity = false;
+    [Range(0.0f, 5f)]
+    public float _Mass = 1;
+    [Range(0.0f, 30.0f)]
+    public float _GrainSpeedOnBirth = 5.0f;
     public bool _Collisions = false;
 
     private bool _GravityPrevious;
+    private float _MassPrevious;
     private bool _CollisionsPrevious;
 
-    [Range(0.0f, 30.0f)]
-    public float _GrainSpeedOnBirth = 5.0f;
     public float _KeyboardForce = 1;
 
     private List<GameObject> _GrainObjects;
 
-
-    private float[] _Window;
 
     private const int _SampleRate = 44100;
 
@@ -100,6 +107,7 @@ public class Granulator : MonoBehaviour
         GenerateGrainValues();
     }
 
+    //---------------------------------------------------------------------
     void Awake()
     {
     }
@@ -107,6 +115,10 @@ public class Granulator : MonoBehaviour
 
     void Update()
     {
+        //---------------------------------------------------------------------
+        // UPDATE MAINTAINANCE
+        //---------------------------------------------------------------------
+
         _SamplesLastUpdate = (int)(Time.deltaTime * _SampleRate);
 
         // Clamp values to reasonable ranges
@@ -125,18 +137,14 @@ public class Granulator : MonoBehaviour
         _ParticleSynthVelocity = _RigidBody.velocity * 0.5f;
 
 
-        // Check for updates from user
-        if (_Gravity != _GravityPrevious)
+        // Check for updates from UI
+        if (_Gravity != _GravityPrevious || _Mass != _MassPrevious)
         {
             _GravityPrevious = _Gravity;
-            _ParticleManager.SetGravity(_Gravity);
+            _MassPrevious = _Mass;
+            _ParticleManager.SetGravity(_Gravity, _Mass);
         }
 
-        if (_Collisions != _CollisionsPrevious)
-        {
-            _CollisionsPrevious = _Collisions;
-            _ParticleManager.SetCollisions(_Collisions);
-        }
 
         // Clear finished grains
         if (_GrainObjects != null)
@@ -152,33 +160,20 @@ public class Granulator : MonoBehaviour
         }
 
 
-
-        // OLD MOVEMENT GRAIN GENERATION
-
-        // NOTE: Could change this to simply divide the number of grains to be played (using density)
-        // this update, based on previous update in samples
-        //for (int i = samplesSinceStart; i < samplesSinceStart + samplesLastUpdate; i++)
-        //{
-        //    if (i >= _SamplesSinceLastGrain + densityInSamples)
-        //    {
-        //        _GrainTriggerList.Add(i - samplesSinceStart);
-        //        _SamplesSinceLastGrain = i;
-        //    }
-        //}
-
-
         //---------------------------------------------------------------------
-        // MOVEMENT GRAIN GENERATION
+        // EMITTER GRAIN GENERATION
         //---------------------------------------------------------------------
-
         _GrainTriggerList.Clear();
 
         int grainsThisUpdate = 0;
         int firstGrainOffset = 0;
         int densityInSamples = _NewGrainDensity * (_SampleRate / 1000);
 
-        // Adding the previous update's time in samples AFTER the update is complete should
-        // correctly accumulate the samples since the last grain playback
+        // If no sample was played last update, adding the previous update's time in samples
+        // AFTER the update is complete should correctly accumulate the samples since the
+        // last grain playback. Otherwise, if a sample WAS played last update, the sample
+        // offset of that grain is subtracted from the total samples of the previous update.
+
         if (_GrainsLastUpdate == 0)
             _SamplesSinceLastGrain += _SamplesLastUpdate;
         else
@@ -205,8 +200,6 @@ public class Granulator : MonoBehaviour
         for (int i = 0; i < grainsThisUpdate; i++)
         {
             _GrainTriggerList.Add(firstGrainOffset + i * densityInSamples);
-            if (i == grainsThisUpdate - 1)
-                _SamplesSinceLastGrain = i;
         }
 
         // If a grain is going to be played this update, set the samples since last grain
@@ -214,14 +207,16 @@ public class Granulator : MonoBehaviour
         if (_GrainTriggerList.Count > 0)
             _SamplesSinceLastGrain = _GrainTriggerList[_GrainTriggerList.Count - 1];
 
+        // NOTE: If no grains are played, the time that the current update takes
+        // (determined next update) will be added to this counter.
 
 
 
         //---------------------------------------------------------------------
-        // CREATE GRAINS
+        // CREATE EMITTER GRAINS
         //---------------------------------------------------------------------
         foreach (int offset in _GrainTriggerList)
-            CreateMovementGrain(offset);
+            CreateEmitterGrain(offset);
 
 
         //---------------------------------------------------------------------
@@ -238,129 +233,121 @@ public class Granulator : MonoBehaviour
     }
 
 
-    // Movement grain creation
-    void CreateMovementGrain(int offset)
+    //---------------------------------------------------------------------
+    // Emitter grain creation
+    //---------------------------------------------------------------------
+    void CreateEmitterGrain(int offset)
     {
-        GenerateGrainValues();
-
         if (_GrainObjects.Count < _MaxGrains)
         {
+            // Create new random values for each grain
+            GenerateGrainValues();
+
             // Generate new particle in trigger particle system and return it here
-            ParticleSystem.Particle tempParticle = _ParticleManager.SpawnMovementParticle(_RigidBody.velocity, _GrainSpeedOnBirth, (float)_GrainDuration / 1000);
+            ParticleSystem.Particle tempParticle = _ParticleManager.SpawnEmitterParticle(_RigidBody.velocity, _GrainSpeedOnBirth, (float)_GrainDuration / 1000);
 
             // Create new grain object
             GameObject tempGrainObject = Instantiate(_GrainPrefab);
             tempGrainObject.transform.parent = _GrainObjectHolder.transform;
             tempGrainObject.transform.position = tempParticle.position;
-            tempGrainObject.GetComponent<Rigidbody>().velocity = tempParticle.velocity + _ParticleSynthVelocity;
 
-            // Initialise, play, and add grain to playing list
+            // Apply physics params to new grain gameobject
+            Rigidbody rb = tempGrainObject.GetComponent<Rigidbody>();
+            rb.velocity = tempParticle.velocity + _ParticleSynthVelocity;
+            rb.useGravity = _Gravity;
+            rb.mass = _Mass;
+
+            // TO DO: MASS CURRENTLY NOT BEING APPLIED CORRECTLY TO GAMEOBJECTS
+            
+            // Initialise, start, and add grain to currently playing list
             Grain grainScript = tempGrainObject.GetComponent<Grain>();
             grainScript._Granulator = this;
             grainScript.Initialise(_MovementAudioClip);
-            grainScript.PlayGrain(_NewGrainPosition, _NewGrainDurationInSamps, _NewGrainPitch, _NewGrainVolume, offset);
+            grainScript.PlayGrain(_NewGrainPosition, _NewGrainDuration, _NewGrainPitch, _NewGrainVolume, offset);
             _GrainObjects.Add(tempGrainObject);
         }
     }
 
-
+    //---------------------------------------------------------------------
     // Collision grain creation
-    void CreateCollisionGrain(Vector3 position, Vector3 velocity, int offset)
+    //---------------------------------------------------------------------
+    void CreateCollisionGrain(ParticleCollisionEvent collision, int offset)
     {
-        GenerateGrainValues();
-
-        if (_GrainObjects.Count < _MaxGrains)
+        if (_GrainObjects.Count < _MaxGrains && _Collisions)
         {
+            // Create new random values for each grain
+            GenerateGrainValues();
+
             // Spawn particle (does not interact with the grain at all)
-            _ParticleManager.SpawnCollisionParticle(position, velocity, (float)_GrainDuration / 1000);
+            _ParticleManager.SpawnCollisionParticle(collision, (float)_CollisionDuration / 1000);
 
             // Create new grain object
             GameObject tempGrainObject = Instantiate(_GrainPrefab);
             tempGrainObject.transform.parent = _GrainObjectHolder.transform;
-            tempGrainObject.transform.position = position;
-            tempGrainObject.GetComponent<Rigidbody>().velocity = velocity;
+            tempGrainObject.transform.position = collision.intersection;
+            tempGrainObject.transform.rotation = Quaternion.LookRotation(collision.normal);
 
-            // Initialise, play, and add grain to playing list
+            // TO DO: Fix collision grain velocity on spawn??
+
+            // Initialise, start, and add grain to currently playing list
             Grain grainScript = tempGrainObject.GetComponent<Grain>();
             grainScript._Granulator = this;
             grainScript.Initialise(_CollisionAudioClip);
-            grainScript.PlayGrain(_NewCollisionGrainPosition, _NewGrainDurationInSamps, _NewGrainPitch, _NewGrainVolume, offset);
+            grainScript.PlayGrain(_NewCollisionGrainPosition, _NewCollisionDuration, _NewGrainPitch, _NewGrainVolume, offset);
             _GrainObjects.Add(tempGrainObject);
         }
     }
 
-
-    // Newly implemented trigger system. Creates a burst of new grains on collision events
+    //---------------------------------------------------------------------
+    // Creates a burst of new grains on collision events
+    //---------------------------------------------------------------------
     public void TriggerCollision(List <ParticleCollisionEvent> collisions, GameObject other)
     {
         for (int i = 0; i < collisions.Count; i++)
         {
             for (int j = 0; j < _CollisionGrainBurst; j++)
             {
-                int currentCollisionSampleOffset = (int) (((float)j / (float)(_CollisionGrainBurst)) * _SamplesLastUpdate);
-                CreateCollisionGrain(collisions[i].intersection, collisions[i].velocity, currentCollisionSampleOffset);
+                int currentCollisionSampleOffset = (int) (((float)j / (float)(_CollisionGrainBurst)) * _SamplesLastUpdate * 10);
+                CreateCollisionGrain(collisions[i], currentCollisionSampleOffset);
             }
         }
     }
 
-
-    // Updates values to push to new grains
+    //---------------------------------------------------------------------
+    // Updates random grain values for new grains
+    //---------------------------------------------------------------------
     void GenerateGrainValues()
     {
         _NewGrainPosition = _GrainPosition + Random.Range(0, _GrainPositionRandom);
         _NewCollisionGrainPosition = _CollisionGrainPosition + Random.Range(0, _CollisionPositionRandom);
 
         _NewGrainPitch = _GrainPitch + Random.Range(-_GrainPitchRandom, _GrainPitchRandom);
-        _NewGrainDurationInMS = (_GrainDuration + Random.Range(0, _GrainDurationRandom));
-        _NewGrainDurationInSamps = (int)(44100 / 1000 * _NewGrainDurationInMS);
+
+        _NewGrainDuration = (int)(44100 / 1000 * (_GrainDuration + Random.Range(0, _GrainDurationRandom)));
+        _NewCollisionDuration = (int)(44100 / 1000 * (_CollisionDuration + Random.Range(0, _CollisionDurationRandom)));
+
         _NewGrainVolume = Clamp(_GrainVolume + Random.Range(-_GrainVolumeRandom, _GrainVolumeRandom), 0, 3);
     }
 
-
-
+    //---------------------------------------------------------------------
     // Clamp function
+    //---------------------------------------------------------------------
     float Clamp(float val, float min, float max) {
         val = val > min ? val : min;
         val = val < max ? val : max;
         return val;
     }
 
+
     // Generate windowing function lookup table
-    void CreateWindow()
-    {
-        _Window = new float[_SampleRate];
+    // NOT IN USE ANYMORE
+    //void CreateWindow()
+    //{
+    //    _Window = new float[_SampleRate];
 
-        for (int i = 0; i < _Window.Length; i++)
-        {
-            _Window[i] = 0.5f * (1 - Mathf.Cos(2 * Mathf.PI * i / _SampleRate));
-        }
-    }
+    //    for (int i = 0; i < _Window.Length; i++)
+    //    {
+    //        _Window[i] = 0.5f * (1 - Mathf.Cos(2 * Mathf.PI * i / _SampleRate));
+    //    }
+    //}
 }
-
-
-
-
-//void CreateGrainObject()
-//{
-//    _ParticleCount = _ParticleManager.GetParticleCount();
-
-//    if (_GrainObjects.Count < _MaxGrains && _ParticleCount > 0)
-//    {
-//        GameObject tmp = Instantiate(_GrainPrefab);
-//        Rigidbody tmpRB = tmp.GetComponent<Rigidbody>();
-
-//        Grain g = tmp.GetComponent<Grain>();
-//        g._Granulator = this;
-//        g.Initialise(_AudioClip);
-//        _GrainObjects.Add(tmp);
-
-//        // Find random particle, set grain position to particle
-//        _Particle = _ParticleManager.GetRandomParticle();
-//        tmp.transform.position = _Particle.position;
-//        tmpRB.velocity = _Particle.velocity;
-
-
-//        // Start grain
-//        g.PlayGrain(_NewGrainPosition, _NewGrainDurationInSamps, _NewGrainPitch, _NewGrainPitchRandom, _NewGrainVolume, _Window);
-//    }
-//}

@@ -4,27 +4,26 @@ using UnityEngine;
 
 public class ParticleManager : MonoBehaviour
 {
-    public ParticleSystem _DummyParticleSystem;
-    public ParticleSystem _MovementParticleSystem;
+    public ParticleSystem _TriggerParticleSystem;
+    public ParticleSystem _EmitterParticleSystem;
     public ParticleSystem _CollisionParticleSystem;
+    public ParticleSystem _ConstantParticleSystem;
     private ParticleSystem.Particle[] _Particles;
     private ParticleSystem.Particle[] _TempParticle;
 
     private Granulator _Granulator;
 
-    private List<ParticleCollisionEvent> _CollisionEvents;
+    public enum ParticleGroup { Trigger, Emitter, Collision, Constant };
 
-    public enum ParticleGroup { Trigger, Movement, Collision };
 
-    private bool _Gravity;
-    private bool _Collisions;
 
-    //[System.Obsolete]
+    //---------------------------------------------------------------------
     private void Awake()
     {
-        _Particles = new ParticleSystem.Particle[_MovementParticleSystem.main.maxParticles];
+        _Particles = new ParticleSystem.Particle[_EmitterParticleSystem.main.maxParticles];
         _TempParticle = new ParticleSystem.Particle[1];
     }
+
 
     void Start()
     {
@@ -34,42 +33,75 @@ public class ParticleManager : MonoBehaviour
     {
     }
 
+
+    //---------------------------------------------------------------------
     public void Initialise(Granulator granulator)
     {
         _Granulator = granulator;
     }
 
-    // NOT IMPLEMENTED YET
-    public void SetGravity (bool gravity)
+
+    //---------------------------------------------------------------------
+    public void SetGravity (bool gravityOn, float gravity)
     {
-        _Gravity = gravity;
+        ParticleSystem.MainModule main = _EmitterParticleSystem.main;
+
+        if (gravityOn)
+            main.gravityModifier = gravity;
+        else
+            main.gravityModifier = 0;
     }
 
-    // NOT IMPLEMENTED YET
-    public void SetCollisions(bool collisions)
-    {
-        _Collisions = collisions;
-    }
 
-    // Main collide passthrough function for Granulator
+
+    //---------------------------------------------------------------------
+    // Main collide passthrough function and grain particle spawner
+    //---------------------------------------------------------------------
     public void Collide(GameObject other, List<ParticleCollisionEvent> collisions)
     {
+        // Construct a collision grain burst in the Granulator
         _Granulator.TriggerCollision(collisions, other);
-        foreach (ParticleCollisionEvent collision in collisions)
-        {
-            SpawnCollisionParticle(collision.intersection, collision.velocity, _Granulator._GrainDuration);
-        } 
+
+        //foreach (ParticleCollisionEvent collision in collisions)
+        //{
+        //    SpawnCollisionParticle(collision, _Granulator._GrainDuration);
+        //} 
     }
 
-    // Particle spawning for movement system, which is more random
-    public ParticleSystem.Particle SpawnMovementParticle(Vector3 inheritVelocity, float startSpeed, float life)
+
+    //---------------------------------------------------------------------
+    // Particle spawning for collision system
+    //---------------------------------------------------------------------
+    public void SpawnCollisionParticle(ParticleCollisionEvent collision, float life)
     {
-        ParticleSystem.MainModule main = _DummyParticleSystem.main;
+        // Set transform of collision particle game object, ready for spawning
+        GameObject gameObject = _CollisionParticleSystem.gameObject;
+        gameObject.transform.position = collision.intersection;
+        gameObject.transform.rotation = Quaternion.LookRotation(collision.normal);
+
+        // Generate new emit params based on dummy particle and life passed into the function
+        ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams();
+
+        emitParams.startLifetime = life * 2;
+        emitParams.applyShapeToPosition = true;
+
+        // Emit particle in main particle system based on those values
+        _CollisionParticleSystem.Emit(emitParams, 1);
+    }
+
+
+    //---------------------------------------------------------------------
+    // Particle spawning for emitter system. Utilises randomness from the trigger particle
+    // system module settings
+    //---------------------------------------------------------------------
+    public ParticleSystem.Particle SpawnEmitterParticle(Vector3 inheritVelocity, float startSpeed, float life)
+    {
+        ParticleSystem.MainModule main = _TriggerParticleSystem.main;
         // Emit particle in the dummy system, get its values, then kill the particle
         main.startSpeed = startSpeed;
-        _DummyParticleSystem.Emit(1);
-        _DummyParticleSystem.GetParticles(_TempParticle);
-        _DummyParticleSystem.Clear();
+        _TriggerParticleSystem.Emit(1);
+        _TriggerParticleSystem.GetParticles(_TempParticle);
+        _TriggerParticleSystem.Clear();
 
         // Generate new emit params based on dummy particle and life passed into the function
         ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams();
@@ -78,27 +110,17 @@ public class ParticleManager : MonoBehaviour
         emitParams.startLifetime = life;
 
         // Emit particle in main particle system based on those values
-        _MovementParticleSystem.Emit(emitParams, 1);
+        _EmitterParticleSystem.Emit(emitParams, 1);
 
         // Return the particle to granulator function
         return _TempParticle[0];
     }
 
-    // Particle spawning for collision system, which is not random
-    // TO DO: NEED TO FIX COLLISION NORMAL DIRECTION!!!
-    public void SpawnCollisionParticle(Vector3 position, Vector3 velocity, float life)
-    {
-        // Generate new emit params based on dummy particle and life passed into the function
-        ParticleSystem.EmitParams emitParams = new ParticleSystem.EmitParams();
-        emitParams.position = position;
-        emitParams.velocity = velocity;
-        emitParams.startLifetime = life;
 
-        // Emit particle in main particle system based on those values
-        _CollisionParticleSystem.Emit(emitParams, 1);
-    }
-
+    //---------------------------------------------------------------------
     // NOT IMPLEMENTED
+    // Returns the list of particles active in the specified particle system
+    //---------------------------------------------------------------------
     public ParticleSystem.Particle[] GetParticles(ParticleGroup particleGroup)
     {
         ParticleSystem.Particle[] returnParticleSystem = null;
@@ -107,34 +129,44 @@ public class ParticleManager : MonoBehaviour
         {
             _CollisionParticleSystem.GetParticles(returnParticleSystem);
         }
-        else if (particleGroup == ParticleGroup.Movement)
+        else if (particleGroup == ParticleGroup.Emitter)
         {
-            _MovementParticleSystem.GetParticles(returnParticleSystem);
+            _EmitterParticleSystem.GetParticles(returnParticleSystem);
         }
         else if (particleGroup == ParticleGroup.Trigger)
         {
-            _DummyParticleSystem.GetParticles(returnParticleSystem);
+            _TriggerParticleSystem.GetParticles(returnParticleSystem);
+        }
+        else if (particleGroup == ParticleGroup.Constant)
+        {
+            _ConstantParticleSystem.GetParticles(returnParticleSystem);
         }
 
         return returnParticleSystem;
     }
 
+
+    //---------------------------------------------------------------------
     public ParticleSystem.Particle GetRandomMovementParticle()
     {
         // Get all particles, then return a random one based on the current count
-        _MovementParticleSystem.GetParticles(_Particles);
-        ParticleSystem.Particle particle = _Particles[(int)(Random.value * _MovementParticleSystem.particleCount)];
+        _EmitterParticleSystem.GetParticles(_Particles);
+        ParticleSystem.Particle particle = _Particles[(int)(Random.value * _EmitterParticleSystem.particleCount)];
 
         return particle;
     }
 
+
+    //---------------------------------------------------------------------
     public int GetMaxParticles()
     {
-        return _MovementParticleSystem.main.maxParticles;
+        return _EmitterParticleSystem.main.maxParticles;
     }
 
+
+    //---------------------------------------------------------------------
     public int GetParticleCount()
     {
-        return _MovementParticleSystem.particleCount;
+        return _EmitterParticleSystem.particleCount;
     }
 }
