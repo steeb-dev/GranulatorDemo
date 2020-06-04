@@ -9941,21 +9941,21 @@ MonoBehaviour:
   _GrainPrefab: {fileID: 1058601950276710, guid: 0439a9d037d24064abe436db9fded4c6,
     type: 3}
   _MaxGrains: 50
-  _TimeBetweenGrains: 140
+  _TimeBetweenGrains: 10
   _TimeBetweenGrainsRandom: 0
   _GrainPitch: 1
   _GrainPitchRandom: 0.01
   _GrainVolume: 2
   _GrainVolumeRandom: 0
   _MovementAudioClip: {fileID: 8300000, guid: 40644eeab2cbac44582d1712922c83ac, type: 3}
-  _GrainPosition: 0.555
+  _GrainPosition: 0.481
   _GrainPositionRandom: 0.05
-  _GrainDuration: 200
+  _GrainDuration: 931
   _GrainDurationRandom: 10
   _CollisionAudioClip: {fileID: 8300000, guid: 2cfa96c21e4f54c20824bd26cd46c10f, type: 3}
   _CollisionGrainPosition: 0.14
   _CollisionPositionRandom: 0.01
-  _CollisionDuration: 363
+  _CollisionDuration: 1709
   _CollisionDurationRandom: 0
   _CollisionGrainBurst: 5
   _ParticleMode: 0
