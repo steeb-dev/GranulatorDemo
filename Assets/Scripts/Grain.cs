@@ -7,7 +7,7 @@ public class Grain : MonoBehaviour
 {
     public bool _IsPlaying = false;
     private int _GrainPos;
-    private int _GrainLength;
+    private int _GrainDuration;
     public float _GrainPitch;
     private float _GrainVol;
     public AudioClip _AudioClip;
@@ -15,9 +15,10 @@ public class Grain : MonoBehaviour
     private float[] _Samples;
     private float[] _GrainSamples;
     private int _Channels;
-    public int _CurrentIndex = -1;
+    public int _PlaybackIndex = -1;
     private int _GrainOffset;
     public Granulator _Granulator;
+    public Granulator.GrainData _GrainData;
 
 
     //---------------------------------------------------------------------
@@ -27,44 +28,46 @@ public class Grain : MonoBehaviour
 
 
     //---------------------------------------------------------------------
-    public void Initialise(AudioClip audioClip)
+    void Update()
+    {
+        // Turn off grain if it's far away
+        //if (this.transform.position.sqrMagnitude > 10000)
+        //    _IsPlaying = false;
+
+        // Turn off grain if playback has finsihed
+        if (!_IsPlaying)
+        {
+            //this.gameObject.SetActive(false);
+            //_Granulator.GrainNotPlaying(this.gameObject);
+        }
+    }
+
+
+    //---------------------------------------------------------------------
+    public void Initialise(Granulator.GrainData gd)
     {
         _AudioSource = GetComponent<AudioSource>();
 
         if (_AudioSource == null)
-        {
             _AudioSource = this.gameObject.AddComponent<AudioSource>();
-        }
 
+        this.gameObject.transform.localPosition = gd.objectPosition;
+        this.gameObject.transform.parent = gd.objectParent;
+        this.gameObject.GetComponent<Rigidbody>().velocity = gd.objectVelocity;
+        this.gameObject.GetComponent<Rigidbody>().useGravity = gd.objectGravity;
+        this.gameObject.GetComponent<Rigidbody>().mass = gd.objectMass;
 
-        _AudioClip = audioClip;
-
+        _AudioClip = gd.audioClip;
         _Samples = new float[_AudioClip.samples * _AudioClip.channels];
-        _Channels = _AudioClip.channels;
         _AudioClip.GetData(_Samples, 0);
-        _GrainOffset = 0;
-    }
+        _Channels = _AudioClip.channels;
 
-
-    //---------------------------------------------------------------------
-    void Update()
-    {
-        if (this.transform.position.sqrMagnitude > 10000)
-            _IsPlaying = false;
-    }
-
-
-    //---------------------------------------------------------------------
-    public void PlayGrain(
-    float newGrainPos, int newGrainLength, float newGrainPitch, float newGrainVol, int offset)
-    {
-        _GrainPos = (int)((newGrainPos * _Samples.Length)); // Rounding to make sure pos always starts at first channel
-        _GrainLength = newGrainLength + offset;
-        _AudioSource.pitch = newGrainPitch;
-        _GrainVol = newGrainVol;
-        _GrainOffset = offset;
-
-        _IsPlaying = true;
+        _GrainPos = (int)(gd.grainPos * _AudioClip.samples / _Channels) * _Channels; // Rounding to make sure pos always starts at first channel
+        //_GrainDuration = (int)(_AudioClip.frequency / 1000 * gd.grainDuration) + gd.offset;  // THIS IS WRONG (SAMPLE RATE THINGS)
+        _GrainDuration = (int)(_AudioClip.frequency / 1000 * gd.grainDuration);
+        _AudioSource.pitch = gd.grainPitch;
+        _GrainVol = gd.grainVolume;
+        _GrainOffset = gd.offset;
 
         BuildSampleArray();
     }
@@ -74,82 +77,82 @@ public class Grain : MonoBehaviour
     private void BuildSampleArray()
     {
         // Grain array to pull samples into
-        _GrainSamples = new float[_GrainLength];
+        _GrainSamples = new float[_GrainDuration];
 
         int sourceIndex;
 
-        // Construct grain sample data (including 0s for timing offset)
+        // Construct grain sample data
         for (int i = 0; i < _GrainSamples.Length - _Channels; i += _Channels)
         {
-            // Set source audio sample position for grain
+            // Offset to source audio sample position for grain
             sourceIndex = _GrainPos + i;
 
             // Loop to start if the grain is longer than source audio
+            // TO DO: Change this to something more sonically pleasing.
+            // Something like ping-pong/mirroring is better than flicking to the start
             while (sourceIndex + _Channels > _Samples.Length)
                 sourceIndex -= _Samples.Length;
-            
+
             // HACCCCCKKKY SHIT - was getting values in the negative somehow
             // Couldn't be bothered debugging just yet
             if (sourceIndex < 0)
                 sourceIndex = 0;
 
-            // Populate 0s for grain timing offset
-            if (i < _GrainOffset)
-                _GrainSamples[i] = 0;
-
-            // Populate remaining samples with source audio and apply windowing
-            else
+            // Populate with source audio and apply windowing
+            for (int channel = 0; channel < _Channels; channel++)
             {
-                for (int channel = 0; channel < _Channels; channel++)
-                {
-                    _GrainSamples[i + channel] = _Samples[sourceIndex + channel]
-                        * Windowing(i - _GrainOffset, _GrainSamples.Length - _GrainOffset);
-                }
+                _GrainSamples[i + channel] = _Samples[sourceIndex + channel]
+                    * Windowing(i, _GrainSamples.Length);
             }
         }
 
-        _CurrentIndex = -1;
+        // Reset the playback index and ready the grain!
+        _PlaybackIndex = -_GrainOffset;
+        _IsPlaying = true;
+        //this.gameObject.SetActive(true);
     }
+
 
 
     //---------------------------------------------------------------------
-    private float GetNextSample(int index, int sample)
-    {
-        _CurrentIndex++;
-
-        // If at the end of the grain duration, stop playing and reset index 
-        if (_CurrentIndex >= _GrainSamples.Length)
-        {
-            _CurrentIndex = -1;
-            _IsPlaying = false;
-        }        
-
-        float returnSample;
-
-        if (_IsPlaying)
-            returnSample = _GrainSamples[_CurrentIndex];
-        else
-            returnSample = 0;
-
-        return returnSample;
-    }
-
-
+    // AUDIO BUFFER CALLS
     //---------------------------------------------------------------------
     void OnAudioFilterRead(float[] data, int channels)
     {
-        // For length of audio buffer, populate with grain samples, maintaining index over successive buffers (if required)
+        // For length of audio buffer, populate with grain samples, maintaining index over successive buffers
         for (int bufferIndex = 0; bufferIndex < data.Length; bufferIndex += channels)
         {
             for (int channel = 0; channel < channels; channel++)
             {
                 if (_IsPlaying)
-                    data[bufferIndex + channel] = GetNextSample(bufferIndex, channel) * _GrainVol;
+                    data[bufferIndex + channel] = GetNextSample() * _GrainVol;
                 else
                     data[bufferIndex + channel] = 0;
             }
         }
     }
+
+
+    //---------------------------------------------------------------------
+    // GET SAMPLE FROM AUDIO ARRAY TO POPULATE OTUPUT BUFFER
+    //---------------------------------------------------------------------
+    private float GetNextSample()
+    {
+        float returnSample = 0;
+
+        if (_PlaybackIndex >= _GrainSamples.Length)
+            _IsPlaying = false;            
+
+        if (_PlaybackIndex >= 0 && _IsPlaying)
+            returnSample = _GrainSamples[_PlaybackIndex];
+
+        _PlaybackIndex++;
+
+        return returnSample;
+    }
+
+
+
 
 
     //---------------------------------------------------------------------
@@ -160,9 +163,6 @@ public class Grain : MonoBehaviour
         return outputSample;
     }
 
-
-    //---------------------------------------------------------------------
-    // Utility func to map a value from one range to another range
     //---------------------------------------------------------------------
     private float Map(float val, float inMin, float inMax, float outMin, float outMax)
     {

@@ -59,13 +59,13 @@ public class ParticleManager : MonoBehaviour
     //---------------------------------------------------------------------
     public void Collide(GameObject other, List<ParticleCollisionEvent> collisions)
     {
-        // Construct a collision grain burst in the Granulator
+        //Construct a collision grain burst in the Granulator
         _Granulator.TriggerCollision(collisions, other);
 
-        //foreach (ParticleCollisionEvent collision in collisions)
-        //{
-        //    SpawnCollisionParticle(collision, _Granulator._GrainDuration);
-        //} 
+        foreach (ParticleCollisionEvent collision in collisions)
+        {
+            SpawnCollisionParticle(collision, _Granulator._GrainDuration);
+        }
     }
 
 

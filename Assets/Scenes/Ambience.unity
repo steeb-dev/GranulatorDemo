@@ -9804,7 +9804,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 996187816}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.06717038, y: -3.9432354, z: -5.4945965}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1076217901}
@@ -9941,30 +9941,33 @@ MonoBehaviour:
   _GrainPrefab: {fileID: 1058601950276710, guid: 0439a9d037d24064abe436db9fded4c6,
     type: 3}
   _MaxGrains: 50
-  _TimeBetweenGrains: 10
-  _TimeBetweenGrainsRandom: 0
   _GrainPitch: 1
   _GrainPitchRandom: 0.01
   _GrainVolume: 2
   _GrainVolumeRandom: 0
-  _MovementAudioClip: {fileID: 8300000, guid: 40644eeab2cbac44582d1712922c83ac, type: 3}
-  _GrainPosition: 0.481
-  _GrainPositionRandom: 0.05
-  _GrainDuration: 931
-  _GrainDurationRandom: 10
-  _CollisionAudioClip: {fileID: 8300000, guid: 2cfa96c21e4f54c20824bd26cd46c10f, type: 3}
-  _CollisionGrainPosition: 0.14
-  _CollisionPositionRandom: 0.01
-  _CollisionDuration: 1709
-  _CollisionDurationRandom: 0
+  _EmitterClip: {fileID: 8300000, guid: 943d8a290713bca42aeac200b9cf6bca, type: 3}
+  _TimeBetweenGrains: 220
+  _TimeBetweenGrainsRandom: 0
+  _GrainPosition: 0.263
+  _GrainPositionRandom: 0
+  _GrainDuration: 100
+  _GrainDurationRandom: 0
+  _CollisionClip: {fileID: 8300000, guid: 943d8a290713bca42aeac200b9cf6bca, type: 3}
   _CollisionGrainBurst: 5
+  _CollisionDensity: 40
+  _CollisionGrainPosition: 0.68
+  _CollisionPositionRandom: 0.01
+  _CollisionDuration: 43
+  _CollisionDurationRandom: 0
   _ParticleMode: 0
   _MoveGrains: 1
-  _Gravity: 1
+  _Gravity: 0
   _Mass: 1
-  _GrainSpeedOnBirth: 4.6
+  _GrainSpeedOnBirth: 9.6
   _Collisions: 1
   _KeyboardForce: 30
+  _GrainsPlaying: []
+  _GrainsFinished: []
 --- !u!1 &1105722170
 GameObject:
   m_ObjectHideFlags: 0
@@ -13757,7 +13760,7 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     minKillSpeed: 0
-    maxKillSpeed: 10000
+    maxKillSpeed: 0
     radiusScale: 1
     collidesWith:
       serializedVersion: 2
