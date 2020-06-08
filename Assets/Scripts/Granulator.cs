@@ -88,14 +88,14 @@ public class Granulator : MonoBehaviour
     public float _KeyboardForce = 1;
 
     private List<GrainData> _GrainQueue;
+    private List<GrainData> _CollisionQueue;
 
-    //public List<int> _GrainTriggerList;
-
-    public List<GameObject> _GrainsPlaying;
-    public List<GameObject> _GrainsFinished;
+    private List<GameObject> _GrainsPlaying;
+    private List<GameObject> _GrainsFinished;
 
 
     private const int _SampleRate = 44100;
+    private float[] _Window;
 
 
     //---------------------------------------------------------------------
@@ -103,22 +103,25 @@ public class Granulator : MonoBehaviour
     {
         _ParticleManager.Initialise(this);
 
+        CreateWindowingLookupTable();
+
         this.gameObject.AddComponent<AudioSource>();
         _RigidBody = this.GetComponent<Rigidbody>();
 
         _GrainsPlaying = new List<GameObject>();
         _GrainsFinished = new List<GameObject>();
+        _GrainQueue = new List<GrainData>();
+        _CollisionQueue = new List<GrainData>();
 
         for (int i = 0; i < _MaxGrains; i++)
         {
             GameObject tempGrainObject = Instantiate(_GrainPrefab);
             tempGrainObject.SetActive(true);
             tempGrainObject.GetComponent<Grain>()._Granulator = this;
+            //tempGrainObject.GetComponent<Grain>().SetWindow(_Window);
             tempGrainObject.transform.parent = _GrainObjectHolder.transform;
             _GrainsFinished.Add(tempGrainObject);
         }
-        
-        _GrainQueue = new List<GrainData>();
 
         _SamplesSinceLastGrain = 0;
 
@@ -268,6 +271,19 @@ public class Granulator : MonoBehaviour
 
 
 
+        //---------------------------------------------------------------------
+        // ADD COLLISION GRAINS TO THE END OF THE GRAIN QUEUE
+        //---------------------------------------------------------------------
+        // Because collisions are added during fixed update, they may overpopulate the grain queue
+        // before emitter grains have been added, causing incorrect timing to emitter grains.
+        // Adding the collisions after emitters have been added prevents this.
+
+        foreach (GrainData grain in _CollisionQueue)
+        {
+            _GrainQueue.Add(grain);
+        }
+
+        _CollisionQueue.Clear();
 
         //---------------------------------------------------------------------
         // ASSIGN GRAIN QUEUE TO FREE GRAIN OBJECTS
@@ -335,7 +351,7 @@ public class Granulator : MonoBehaviour
                 GrainData tempGrainData = new GrainData(pos, _GrainObjectHolder.transform, Vector3.zero, _Mass,
                     _CollisionClip, _NewCollisionDuration, offset, _NewCollisionGrainPosition, _NewGrainPitch, _NewGrainVolume);
 
-                _GrainQueue.Add(tempGrainData);
+                _CollisionQueue.Add(tempGrainData);
             }
         }
     }
@@ -405,5 +421,16 @@ public class Granulator : MonoBehaviour
         val = val > min ? val : min;
         val = val < max ? val : max;
         return val;
+    }
+
+
+    void CreateWindowingLookupTable()
+    {
+        _Window = new float[512];
+
+        for (int i = 0; i < _Window.Length; i++)
+        {
+            _Window[i] = 0.5f * (1 - Mathf.Cos(2 * Mathf.PI * i / _Window.Length));
+        }
     }
 }

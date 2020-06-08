@@ -21,9 +21,21 @@ public class Grain : MonoBehaviour
     public Granulator.GrainData _GrainData;
     public float _Mass;
     private Rigidbody _RigidBody;
+    private float[] _Window;
 
 
     //---------------------------------------------------------------------
+
+    private void Awake()
+    {
+        _Window = new float[512];
+
+        for (int i = 0; i < _Window.Length; i++)
+        {
+            _Window[i] = 0.5f * (1 - Mathf.Cos(2 * Mathf.PI * i / _Window.Length));
+        }
+    }
+
     void Start()
     {
         _RigidBody = GetComponent<Rigidbody>();
@@ -44,6 +56,12 @@ public class Grain : MonoBehaviour
             //_Granulator.GrainNotPlaying(this.gameObject);
         }
     }
+
+    public void SetWindow(float[] window)
+    {
+        _Window = window;
+    }
+
 
     private void FixedUpdate()
     {
@@ -108,8 +126,11 @@ public class Grain : MonoBehaviour
             // Populate with source audio and apply windowing
             for (int channel = 0; channel < _Channels; channel++)
             {
+                //_GrainSamples[i + channel] = _Samples[sourceIndex + channel]
+                //    * Windowing(i, _GrainSamples.Length);
+                
                 _GrainSamples[i + channel] = _Samples[sourceIndex + channel]
-                    * Windowing(i, _GrainSamples.Length);
+                    * _Window[(int)Map(i, 0, _GrainSamples.Length, 0, _Window.Length)];
             }
         }
 

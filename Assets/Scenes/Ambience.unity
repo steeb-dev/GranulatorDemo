@@ -9953,20 +9953,18 @@ MonoBehaviour:
   _GrainDuration: 593
   _GrainDurationRandom: 0
   _CollisionClip: {fileID: 8300000, guid: 943d8a290713bca42aeac200b9cf6bca, type: 3}
-  _CollisionGrainBurst: 5
-  _CollisionDensity: 40
+  _CollisionGrainBurst: 3
+  _CollisionDensity: 20
   _CollisionGrainPosition: 0.68
   _CollisionPositionRandom: 0.01
-  _CollisionDuration: 43
+  _CollisionDuration: 80
   _CollisionDurationRandom: 0
   _ParticleMode: 0
   _MoveGrains: 1
-  _Collisions: 0
+  _Collisions: 1
   _Mass: 3.2
   _GrainSpeedOnBirth: 0
   _KeyboardForce: 30
-  _GrainsPlaying: []
-  _GrainsFinished: []
 --- !u!1 &1105722170
 GameObject:
   m_ObjectHideFlags: 0
