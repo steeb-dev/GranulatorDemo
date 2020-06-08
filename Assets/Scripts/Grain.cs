@@ -8,22 +8,25 @@ public class Grain : MonoBehaviour
     public bool _IsPlaying = false;
     private int _GrainPos;
     private int _GrainDuration;
-    public float _GrainPitch;
+    private float _GrainPitch;
     private float _GrainVol;
-    public AudioClip _AudioClip;
+    private AudioClip _AudioClip;
     private AudioSource _AudioSource;
     private float[] _Samples;
     private float[] _GrainSamples;
     private int _Channels;
-    public int _PlaybackIndex = -1;
+    private int _PlaybackIndex = -1;
     private int _GrainOffset;
     public Granulator _Granulator;
     public Granulator.GrainData _GrainData;
+    public float _Mass;
+    private Rigidbody _RigidBody;
 
 
     //---------------------------------------------------------------------
     void Start()
     {
+        _RigidBody = GetComponent<Rigidbody>();
     }
 
 
@@ -42,6 +45,11 @@ public class Grain : MonoBehaviour
         }
     }
 
+    private void FixedUpdate()
+    {
+        _RigidBody.AddForce(new Vector3(0, -_Mass * 9.81f, 0));
+    }
+
 
     //---------------------------------------------------------------------
     public void Initialise(Granulator.GrainData gd)
@@ -53,9 +61,8 @@ public class Grain : MonoBehaviour
 
         this.gameObject.transform.localPosition = gd.objectPosition;
         this.gameObject.transform.parent = gd.objectParent;
-        this.gameObject.GetComponent<Rigidbody>().velocity = gd.objectVelocity;
-        this.gameObject.GetComponent<Rigidbody>().useGravity = gd.objectGravity;
-        this.gameObject.GetComponent<Rigidbody>().mass = gd.objectMass;
+        _RigidBody.velocity = gd.objectVelocity;
+        _Mass = gd.objectMass;
 
         _AudioClip = gd.audioClip;
         _Samples = new float[_AudioClip.samples * _AudioClip.channels];

@@ -76,16 +76,14 @@ public class Granulator : MonoBehaviour
     private Vector3 _ParticleSynthVelocity;
 
     public bool _MoveGrains = true;
-    public bool _Gravity = false;
-    [Range(0.0f, 5f)]
-    public float _Mass = 1;
+    public bool _Collisions = false;
+    [Range(0.0f, 10f)]
+    public float _Mass = 0;
     [Range(0.0f, 30.0f)]
     public float _GrainSpeedOnBirth = 5.0f;
-    public bool _Collisions = false;
 
-    private bool _GravityPrevious;
-    private float _MassPrevious;
     private bool _CollisionsPrevious;
+    private float _MassPrevious;
 
     public float _KeyboardForce = 1;
 
@@ -158,11 +156,16 @@ public class Granulator : MonoBehaviour
         _ParticleSynthVelocity = _RigidBody.velocity * 0.5f;
 
         // Check for updates from UI
-        if (_Gravity != _GravityPrevious || _Mass != _MassPrevious)
+        if (_Mass != _MassPrevious)
         {
-            _GravityPrevious = _Gravity;
             _MassPrevious = _Mass;
-            _ParticleManager.SetGravity(_Gravity, _Mass);
+            _ParticleManager.SetMass(_Mass);
+        }
+
+        if (_Collisions != _CollisionsPrevious)
+        {
+            _CollisionsPrevious = _Collisions;
+            _ParticleManager.SetCollisions(_Collisions);
         }
 
         //Move finished grains to inactive pool
@@ -243,7 +246,7 @@ public class Granulator : MonoBehaviour
             int offset = firstGrainOffset + i * densityInSamples;
 
             // Create temporary grain data object and add it to the playback queue
-            GrainData tempGrainData = new GrainData(_TempParticle.position, _GrainObjectHolder.transform, tempParticle.velocity + _ParticleSynthVelocity, _Gravity, _Mass,
+            GrainData tempGrainData = new GrainData(_TempParticle.position, _GrainObjectHolder.transform, tempParticle.velocity + _ParticleSynthVelocity, _Mass,
                 _EmitterClip, _NewGrainDuration, offset, _NewGrainPosition, _NewGrainPitch, _NewGrainVolume);
 
             _GrainQueue.Add(tempGrainData);
@@ -263,17 +266,11 @@ public class Granulator : MonoBehaviour
 
 
 
-        //---------------------------------------------------------------------
-        // CREATE COLLISION GRAINS
-        //---------------------------------------------------------------------
-        // Populate grain queue with collision grains
-        //
-
 
 
 
         //---------------------------------------------------------------------
-        // ASSIGN GRAIN QUEUE TO GRAIN OBJECTS
+        // ASSIGN GRAIN QUEUE TO FREE GRAIN OBJECTS
         //---------------------------------------------------------------------
         foreach (GrainData grain in _GrainQueue)
         {
@@ -286,6 +283,8 @@ public class Granulator : MonoBehaviour
             }
         }
 
+        // Clears the grain queue for next update. Perhaps this might change if for some reason it's
+        // better to maintain unfinished grains for the next udpate
         _GrainQueue.Clear();
 
 
@@ -304,46 +303,20 @@ public class Granulator : MonoBehaviour
     }
 
 
+    void EmitterGrainTiming()
+    {
 
+    }
 
-    ////---------------------------------------------------------------------
-    //// Collision grain creation
-    ////---------------------------------------------------------------------
+    void EmitterGrainPopulating()
+    {
 
-    //// TO DO: Move over to _GrainsToPlay list AND merge with above function (CreateEmitterGrain)
-    //void CreateCollisionGrain(ParticleCollisionEvent collision, int offset)
-    //{
-    //    if (_GrainsFinished.Count > 0 && _Collisions)
-    //    {
-    //        // Create new random values for each grain
-    //        GenerateGrainValues();
-
-    //        // Spawn particle (does not interact with the grain at all)
-    //        _ParticleManager.SpawnCollisionParticle(collision, (float)_CollisionDuration / 1000);
-
-    //        // Create new grain object
-    //        _GrainsFinished[0] = Instantiate(_GrainPrefab);
-    //        _GrainsFinished[0].transform.parent = _GrainObjectHolder.transform;
-    //        _GrainsFinished[0].transform.position = collision.intersection;
-    //        _GrainsFinished[0].transform.rotation = Quaternion.LookRotation(collision.normal);
-
-    //        // TO DO: Fix collision grain velocity on spawn??
-
-    //        // Initialise, start, and add grain to currently playing list
-    //        Grain grainScript = _GrainsFinished[0].GetComponent<Grain>();
-    //        grainScript._Granulator = this;
-    //        //grainScript.Initialise(_CollisionAudioClip);
-    //        grainScript.PlayGrain(_CollisionClip, _NewCollisionGrainPosition, _NewCollisionDuration, _NewGrainPitch, _NewGrainVolume, offset);
-
-    //        _GrainsPlaying.Add(_GrainsFinished[0]);
-    //        _GrainsFinished.RemoveAt(0);
-    //    }
-    //}
+    }
 
 
 
     //---------------------------------------------------------------------
-    // creates a burst of new grains on collision events
+    // Creates a burst of new grains on collision events
     //---------------------------------------------------------------------
     public void TriggerCollision(List<ParticleCollisionEvent> collisions, GameObject other)
     {
@@ -356,18 +329,16 @@ public class Granulator : MonoBehaviour
                 // Calculate timing offset for grain
                 int offset = j * _CollisionDensity * (_SampleRate / 1000);
 
+                Vector3 pos = _GrainObjectHolder.transform.InverseTransformPoint(collisions[i].intersection);
+
                 // Create temporary grain data object and add it to the playback queue
-                GrainData tempGrainData = new GrainData(collisions[i].intersection, _GrainObjectHolder.transform, Vector3.zero, _Gravity, _Mass,
+                GrainData tempGrainData = new GrainData(pos, _GrainObjectHolder.transform, Vector3.zero, _Mass,
                     _CollisionClip, _NewCollisionDuration, offset, _NewCollisionGrainPosition, _NewGrainPitch, _NewGrainVolume);
 
                 _GrainQueue.Add(tempGrainData);
             }
         }
     }
-
-
-
-
 
 
     //---------------------------------------------------------------------
@@ -400,7 +371,6 @@ public class Granulator : MonoBehaviour
         public Vector3 objectPosition;
         public Transform objectParent;
         public Vector3 objectVelocity;
-        public bool objectGravity;
         public float objectMass;
         public AudioClip audioClip;
 
@@ -411,13 +381,12 @@ public class Granulator : MonoBehaviour
         public float grainVolume;
 
         public GrainData() { }
-        public GrainData(Vector3 position, Transform parent, Vector3 velocity, bool gravity, float mass,
-            AudioClip grainAudioClip, float durationInMS, int grainOffsetInSamples, float playheadPosition, float pitch, float volume)
+        public GrainData(Vector3 position, Transform parent, Vector3 velocity, float mass, AudioClip grainAudioClip,
+            float durationInMS, int grainOffsetInSamples, float playheadPosition, float pitch, float volume)
         {
             objectPosition = position;
             objectParent = parent;
             objectVelocity = velocity;
-            objectGravity = gravity;
             objectMass = mass;
             audioClip = grainAudioClip;
             offset = grainOffsetInSamples;

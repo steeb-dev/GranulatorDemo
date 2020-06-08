@@ -9839,7 +9839,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1076217900}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.7749891, y: 1.94, z: -0.8120289}
+  m_LocalPosition: {x: -0.7749891, y: 4.93, z: -0.8120289}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 996187817}
@@ -9946,11 +9946,11 @@ MonoBehaviour:
   _GrainVolume: 2
   _GrainVolumeRandom: 0
   _EmitterClip: {fileID: 8300000, guid: 943d8a290713bca42aeac200b9cf6bca, type: 3}
-  _TimeBetweenGrains: 220
+  _TimeBetweenGrains: 596
   _TimeBetweenGrainsRandom: 0
   _GrainPosition: 0.263
   _GrainPositionRandom: 0
-  _GrainDuration: 100
+  _GrainDuration: 593
   _GrainDurationRandom: 0
   _CollisionClip: {fileID: 8300000, guid: 943d8a290713bca42aeac200b9cf6bca, type: 3}
   _CollisionGrainBurst: 5
@@ -9961,10 +9961,9 @@ MonoBehaviour:
   _CollisionDurationRandom: 0
   _ParticleMode: 0
   _MoveGrains: 1
-  _Gravity: 0
-  _Mass: 1
-  _GrainSpeedOnBirth: 9.6
-  _Collisions: 1
+  _Collisions: 0
+  _Mass: 3.2
+  _GrainSpeedOnBirth: 0
   _KeyboardForce: 30
   _GrainsPlaying: []
   _GrainsFinished: []

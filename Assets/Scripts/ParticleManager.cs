@@ -42,14 +42,18 @@ public class ParticleManager : MonoBehaviour
 
 
     //---------------------------------------------------------------------
-    public void SetGravity (bool gravityOn, float gravity)
+    public void SetMass(float mass)
     {
         ParticleSystem.MainModule main = _EmitterParticleSystem.main;
 
-        if (gravityOn)
-            main.gravityModifier = gravity;
-        else
-            main.gravityModifier = 0;
+        main.gravityModifier = mass;
+    }
+
+    public void SetCollisions (bool collisions)
+    {
+        ParticleSystem.CollisionModule collisionModule = _EmitterParticleSystem.collision;
+
+        collisionModule.enabled = collisions;
     }
 
 
